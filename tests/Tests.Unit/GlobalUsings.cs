@@ -1,0 +1,15 @@
+global using System.Collections.Frozen;
+global using System.Collections.Immutable;
+global using System.Globalization;
+global using System.Reflection;
+global using System.Text.Json;
+global using System.Text.Json.Nodes;
+global using App.Server.Notification.Application.Domain.Common.Helpers;
+global using App.Server.Notification.Application.Domain.Entities.JsonEntities;
+global using App.Server.Notification.Application.Domain.Types;
+global using App.Server.Notification.Application.Domain.Types.Result;
+global using App.Server.Notification.Tests.Unit.TestData;
+global using App.Server.Notification.Tests.Unit.Tests;
+global using Serilog;
+global using Serilog.Events;
+global using Xunit;

@@ -1,0 +1,10 @@
+global using System.Text.Json;
+global using App.Server.Notification.Application;
+global using App.Server.Notification.Application.Abstractions;
+global using App.Server.Notification.Application.Domain.DataModels.Dtos;
+global using App.Server.Notification.Application.Domain.Entities;
+global using App.Server.Notification.Application.Domain.Entities.JsonEntities;
+global using App.Server.Notification.Application.Domain.Types;
+global using App.Server.Notification.Presentation;
+global using Microsoft.AspNetCore.Mvc;
+global using Serilog;

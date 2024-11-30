@@ -1,0 +1,10 @@
+global using App.Server.Notification.Application.Abstractions;
+global using App.Server.Notification.Application.Domain.Entities;
+global using App.Server.Notification.Infrastructure;
+global using App.Server.Notification.Infrastructure.Persistence;
+global using Microsoft.AspNetCore.Hosting;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Microsoft.AspNetCore.TestHost;
+global using Microsoft.Extensions.DependencyInjection;
+global using Testcontainers.PostgreSql;
+global using Xunit;
