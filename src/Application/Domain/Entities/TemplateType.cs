@@ -70,15 +70,6 @@ public class TemplateType : Entity, IAggregateRoot
     /// Adds an email template to the template type.
     /// </summary>
     /// <param name="emailTemplate">The email template to add.</param>
-    /// <param name="emailBodyContentDto">The first email body content to add to the email template.</param>
     /// <returns></returns>
-    public Result AddEmailTemplate(
-        EmailTemplate emailTemplate,
-        EmailBodyContentDto emailBodyContentDto
-    ) =>
-        Result.Try(() =>
-        {
-            emailTemplate.UpdateContent(emailBodyContentDto);
-            _emailTemplates.Add(emailTemplate);
-        });
+    public void AddEmailTemplate(EmailTemplate emailTemplate) => _emailTemplates.Add(emailTemplate);
 }

@@ -49,10 +49,12 @@ public class EmailTemplateService(IUnitOfWork unitOfWork) : IEmailTemplateServic
             .Try(() =>
             {
                 var emailTemplate = _templateTypeRepository.GetEmailTemplate(emailTemplateId);
-                
-                var emailBodyContent = 
 
-                emailTemplate.UpdateContent(emailBodyContentDto);
+                var emailBodyContent = emailBodyContentDto.ToEntity(
+                    emailTemplate.TemplateType.AcceptedMergeTags
+                );
+
+                emailTemplate.UpdateContent(emailBodyContent);
 
                 unitOfWork.SaveChanges();
             })
@@ -72,12 +74,13 @@ public class EmailTemplateService(IUnitOfWork unitOfWork) : IEmailTemplateServic
                     createEmailTemplateDto.TemplateTypeId
                 );
 
-                var emailTemplateEntity = createEmailTemplateDto.ToEntity();
-
-                templateType.AddEmailTemplate(
-                    emailTemplateEntity,
-                    createEmailTemplateDto.EmailBodyContentDto
+                var emailBodyContent = createEmailTemplateDto.EmailBodyContentDto.ToEntity(
+                    templateType.AcceptedMergeTags
                 );
+
+                var emailTemplateEntity = createEmailTemplateDto.ToEntity(emailBodyContent);
+
+                templateType.AddEmailTemplate(emailTemplateEntity);
 
                 unitOfWork.SaveChanges();
 

@@ -24,9 +24,10 @@ public static partial class Mapper
     /// Maps an <see cref="CreateEmailTemplateDto"/> to an <see cref="EmailTemplate"/>.
     /// </summary>
     /// <param name="createEmailTemplateDto">The dto to map.</param>
+    /// <param name="emailBodyContent"></param>
     /// <returns>A <see cref="EmailTemplate"/> entity from the <paramref name="createEmailTemplateDto"/>.</returns>
     public static partial EmailTemplate ToEntity(
-        this CreateEmailTemplateDto createEmailTemplateDto
+        this CreateEmailTemplateDto createEmailTemplateDto, EmailBodyContent emailBodyContent
     );
 
     /// <summary>
@@ -82,9 +83,9 @@ public static partial class Mapper
     /// Maps a <see cref="EmailBodyContentDto"/> to a <see cref="EmailBodyContent"/>.
     /// </summary>
     /// <param name="emailBodyContentDto">The dto to map.</param>
-    /// <param name="mergeTags"></param>
+    /// <param name="acceptedMergeTags">The <see cref="ImmutableHashSet{T}"/> of accepted merge tags for the type this content is being created for.</param>
     /// <returns>An <see cref="EmailBodyContent"/> entity from the <paramref name="emailBodyContentDto"/>.</returns>
-    public static partial EmailBodyContent ToEntity(this EmailBodyContentDto emailBodyContentDto, ImmutableHashSet<MergeTag> mergeTags);
+    public static partial EmailBodyContent ToEntity(this EmailBodyContentDto emailBodyContentDto, IEnumerable<MergeTag> acceptedMergeTags);
 
     /// <summary>
     /// Maps a <see cref="CustomMergeTag"/> to a <see cref="CustomMergeTagDto"/>.

@@ -18,9 +18,6 @@ namespace App.Server.Notification.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.10")
-                .HasAnnotation("Proxies:ChangeTracking", false)
-                .HasAnnotation("Proxies:CheckEquality", false)
-                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -260,7 +257,7 @@ namespace App.Server.Notification.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.OwnsMany("App.Server.Notification.Application.Domain.Entities.JsonEntities.CustomMergeTag", "Data", b1 =>
+                    b.OwnsMany("App.Server.Notification.Application.Domain.Entities.JsonEntities.CustomMergeTag", "CustomMergeTags", b1 =>
                         {
                             b1.Property<Guid>("EmailPresetId")
                                 .HasColumnType("uuid");
@@ -293,13 +290,13 @@ namespace App.Server.Notification.Infrastructure.Migrations
 
                             b1.ToTable("EmailPreset");
 
-                            b1.ToJson("Data");
+                            b1.ToJson("CustomMergeTags");
 
                             b1.WithOwner()
                                 .HasForeignKey("EmailPresetId");
                         });
 
-                    b.Navigation("Data");
+                    b.Navigation("CustomMergeTags");
 
                     b.Navigation("DataOwner");
 
@@ -313,9 +310,9 @@ namespace App.Server.Notification.Infrastructure.Migrations
                         .HasForeignKey("DataOwnerId");
 
                     b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateType", "TemplateType")
-                        .WithMany()
+                        .WithMany("EmailTemplates")
                         .HasForeignKey("TemplateTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("DataOwner");
@@ -367,6 +364,11 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.Navigation("EmailBodyContents");
 
                     b.Navigation("EmailPresets");
+                });
+
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateType", b =>
+                {
+                    b.Navigation("EmailTemplates");
                 });
 #pragma warning restore 612, 618
         }

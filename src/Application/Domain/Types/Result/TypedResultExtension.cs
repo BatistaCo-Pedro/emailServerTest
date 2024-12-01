@@ -96,7 +96,7 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
                 .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
         }
     }
@@ -114,7 +114,7 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
                 .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
         }
     }
@@ -132,7 +132,7 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
                 .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
         }
     }

@@ -16,20 +16,20 @@ public class EmailTemplate : AuditableEntity
     /// Ctor. Creates an instance of <see cref="EmailTemplate"/>.
     /// </summary>
     /// <param name="name">A human-readable name for the template.</param>
+    /// <param name="emailBodyContent"></param>
     /// <param name="isCustom">A flag defining whether the template is custom.</param>
-    /// <param name="templateTypeId">The ID of the type of the template.</param>
     /// <remarks>
     /// Email templates always have at least one email content body.
     /// </remarks>
     public EmailTemplate(
         NonEmptyString name,
-        bool isCustom,
-        Guid templateTypeId
+        EmailBodyContent emailBodyContent,
+        bool isCustom
     )
     {
         Name = name;
-        TemplateTypeId = templateTypeId;
         IsCustom = isCustom;
+        AddContent(emailBodyContent);
 
         EmailTemplateValidator.ValidateAndThrow(this);
     }
@@ -160,17 +160,10 @@ public class EmailTemplate : AuditableEntity
     /// Updates the content of the email template.
     /// This method updates contents if they exist, otherwise it adds them.
     /// </summary>
-    /// <param name="emailBodyContentDto">The dto of the content to update or add.</param>
+    /// <param name="emailBodyContent">The content to update or add.</param>
     /// <returns>A <see cref="Result"/> object representing the success of this operation.</returns>
-    public Result UpdateContent(EmailBodyContentDto emailBodyContentDto)
+    public Result UpdateContent(EmailBodyContent emailBodyContent)
     {
-        var emailBodyContent = emailBodyContentDto.ToEntity(
-            MergeTagHelper.GetMergeTags(
-                emailBodyContentDto.JsonStructure,
-                TemplateType.AcceptedMergeTags.ToImmutableHashSet()
-            )
-        );
-
         var dbEmailBodyContent = _emailBodyContents.FirstOrDefault(x =>
             x.CultureCode == emailBodyContent.CultureCode
         );
@@ -207,7 +200,11 @@ public class EmailTemplate : AuditableEntity
 
     private void UpdateDefaultContent(EmailBodyContent emailBodyContent)
     {
-        if (emailBodyContent.IsDefault)
+        if(_emailBodyContents.Count == 0)
+        {
+            emailBodyContent.SetDefault(true);
+        }
+        else if (emailBodyContent.IsDefault)
         {
             _emailBodyContents.Single(x => x.IsDefault).SetDefault(false);
         }

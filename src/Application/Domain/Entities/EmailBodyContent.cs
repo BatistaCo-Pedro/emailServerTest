@@ -18,7 +18,7 @@ public class EmailBodyContent : AuditableEntity
     /// <param name="subject">The culture specific subject for the content.</param>
     /// <param name="body">The email body of the content.</param>
     /// <param name="jsonStructure">The JSON structure of the email.</param>
-    /// <param name="mergeTags">The merge tags to set.</param>
+    /// <param name="acceptedMergeTags">The accepted merge tags of the type to get the actual merge tags from.</param>
     /// <param name="isDefault">Defines if the content is the default content.</param>
     /// <remarks>
     /// <paramref name="jsonStructure"/> and <paramref name="body"/> get compressed and decompressed when being inserted into the database.
@@ -30,7 +30,7 @@ public class EmailBodyContent : AuditableEntity
         NonEmptyString subject,
         HtmlString body,
         JsonDocument jsonStructure,
-        ImmutableHashSet<MergeTag> mergeTags,
+        IEnumerable<MergeTag> acceptedMergeTags,
         bool isDefault
     )
     {
@@ -39,7 +39,10 @@ public class EmailBodyContent : AuditableEntity
         Body = body;
         JsonStructure = jsonStructure;
         IsDefault = isDefault;
-        MergeTags = mergeTags;
+        MergeTags = MergeTagHelper.GetMergeTags(
+            jsonStructure,
+            acceptedMergeTags.ToImmutableHashSet()
+        );
     }
 
     /// <summary>
@@ -94,14 +97,18 @@ public class EmailBodyContent : AuditableEntity
     /// <param name="jsonStructure">The new JSON structure to set.</param>
     /// <param name="mergeTags">The merge tags to set.</param>
     /// <returns>A <see cref="Result"/> representing the operation.</returns>
-    public Result UpdateBody(HtmlString body, JsonDocument jsonStructure, ImmutableHashSet<MergeTag> mergeTags)
+    public Result UpdateBody(
+        HtmlString body,
+        JsonDocument jsonStructure,
+        ImmutableHashSet<MergeTag> mergeTags
+    )
     {
         // TODO: Validations
 
         Body = body;
         JsonStructure = jsonStructure;
         MergeTags = mergeTags;
-        
+
         return Result.Ok();
     }
 

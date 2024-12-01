@@ -86,12 +86,6 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
             .Property(x => x.JsonStructure)
             .HasConversion<CompressedJsonConverter>();
 
-        modelBuilder
-            .Entity<EmailTemplate>()
-            .HasOne(x => x.TemplateType)
-            .WithMany()
-            .OnDelete(DeleteBehavior.Restrict);
-
         base.OnModelCreating(modelBuilder);
     }
 
