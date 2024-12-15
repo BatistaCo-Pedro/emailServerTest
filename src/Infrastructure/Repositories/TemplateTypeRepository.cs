@@ -17,8 +17,9 @@ internal class TemplateTypeRepository(NotificationDbContext db)
 
     public override TemplateType GetById(Guid id) => GetByCondition(x => x.Id == id).First();
 
-    public EmailTemplate GetEmailTemplate(Guid emailTemplateId) =>
+    public Result<EmailTemplate> GetEmailTemplate(Guid emailTemplateId) =>
         GetByCondition(x => x.EmailTemplates.Any(y => y.Id == emailTemplateId))
             .SelectMany(x => x.EmailTemplates)
-            .First(x => x.Id == emailTemplateId);
+            .First(x => x.Id == emailTemplateId)
+            .ToResult($"Couldn't find Email Template with ID {emailTemplateId}.");
 }

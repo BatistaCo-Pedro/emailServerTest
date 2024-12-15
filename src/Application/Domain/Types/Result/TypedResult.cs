@@ -122,6 +122,14 @@ public sealed partial class Result<TValue> : IActionableResult<TValue, Result<TV
     }
 
     /// <inheritdoc />
+    public T Match<T>(Func<TValue, T> onSuccess, Func<IError, T> onError)
+        where T : class => IsSuccess ? onSuccess(Value) : onError(Errors.First());
+
+    /// <inheritdoc />
+    public Result<T> Match<T>(Func<TValue, T> onSuccess)
+        where T : class => IsSuccess ? onSuccess(Value) : Result<T>.Fail(Errors);
+
+    /// <inheritdoc />
     public bool HasError<TError>()
         where TError : IError => Errors.Any(e => e is TError);
 

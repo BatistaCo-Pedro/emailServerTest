@@ -292,6 +292,10 @@ public interface IActionableResult<TValue, TResult> : IResult<TValue>
     /// <returns>A new instance of <typeparamref name="TResult" /> representing a failed result with the specified errors.</returns>
     static abstract TResult Fail(IEnumerable<IError> errors);
 
+    T Match<T>(Func<TValue, T> onSuccess, Func<IError, T> onError) where T : class;
+
+    Result<T> Match<T>(Func<TValue, T> onSuccess) where T : class;
+    
     /// <summary>
     /// Wraps an asynchronous action in a try-catch block and returns a result.
     /// </summary>

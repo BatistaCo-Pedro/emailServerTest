@@ -72,4 +72,14 @@ public class TemplateType : Entity, IAggregateRoot
     /// <param name="emailTemplate">The email template to add.</param>
     /// <returns></returns>
     public void AddEmailTemplate(EmailTemplate emailTemplate) => _emailTemplates.Add(emailTemplate);
+
+    /// <summary>
+    /// Gets an email template by id.
+    /// </summary>
+    /// <param name="emailTemplateId">The ID of the email template to get.</param>
+    /// <returns>A <see cref="Result{TValue}"/> object representing the result of the operation.</returns>
+    public Result<EmailTemplate> GetEmailTemplate(Guid emailTemplateId) =>
+        _emailTemplates
+            .FirstOrDefault(x => x.Id == emailTemplateId)
+            .ToResult($"Email template with id {emailTemplateId} not found");
 }

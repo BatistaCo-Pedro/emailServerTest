@@ -5,15 +5,40 @@ namespace App.Server.Notification.Application.Abstractions;
 /// </summary>
 public interface IMailingQueue
 {
-    // ToDo: Example methods
+    public string EnqueueEmail(EmailRequestDto emailRequestDto);
 
-    /*public bool EnqueueEmail(EmailInfoDto emailInfoDto);
+    public string EnqueueScheduledEmail(ScheduledEmailRequestDto scheduledEmailRequestDto);
 
-    public bool EnqueueScheduledEmail(EmailInfoDto emailInfoDto, DateTime sendTime);
+    //public bool DequeueScheduledEmail(string jobId);
 
-    public bool DequeueScheduledEmail(string emailInfoId);
+    public void AddRecurringEmail(RecurringEmailRequestDto recurringEmailRequestDto);
 
-    public bool AddRecurringEmail(string jobId, EmailInfoDto emailInfoDto, string cronExpression);
-
-    public void RemoveRecurringEmail(string emailInfoId);*/
+    //public void RemoveRecurringEmail(string jobId);
 }
+
+public interface IMailingQueueViewer
+{
+    public bool PeekEmail(Guid emailTemplateId, out EmailRequestDto? emailRequestDto);
+}
+
+public record EmailRequestDto(
+    Guid TemplateTypeId,
+    CultureCode CultureCode,
+    NonEmptyString SenderName,
+    NonEmptyString SenderEmail,
+    NonEmptyString RecipientName,
+    NonEmptyString RecipientEmail,
+    ImmutableDictionary<string, object> MergeTagArguments,
+    Guid? EmailTemplateId = null,
+    NonEmptyString? CustomSubject = null
+) : IDto, IEventMessage;
+
+public record ScheduledEmailRequestDto(EmailRequestDto EmailRequestDto, DateTimeOffset SendTime)
+    : IDto,
+        IEventMessage;
+
+public record RecurringEmailRequestDto(
+    EmailRequestDto EmailRequestDto,
+    string JobId,
+    string CronExpression
+) : IDto, IEventMessage;

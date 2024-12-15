@@ -2,5 +2,5 @@
 
 public interface ITemplateTypeRepository : ICrudRepository<TemplateType>
 {
-    EmailTemplate GetEmailTemplate(Guid emailTemplateId);
+    Result<EmailTemplate> GetEmailTemplate(Guid emailTemplateId);
 }

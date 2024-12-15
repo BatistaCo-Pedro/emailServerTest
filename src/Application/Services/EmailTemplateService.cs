@@ -34,21 +34,22 @@ public interface IEmailTemplateService
 }
 
 /// <inheritdoc />
-public class EmailTemplateService(IUnitOfWork unitOfWork) : IEmailTemplateService
+public class EmailTemplateService(IUnitOfWork unitOfWork, IMailingQueueViewer mailingQueueViewer)
+    : IEmailTemplateService
 {
     private readonly ITemplateTypeRepository _templateTypeRepository =
         unitOfWork.GetRepository<ITemplateTypeRepository>();
 
     /// <inheritdoc />
     public Result<ReadEmailTemplateDto> Get(Guid id) =>
-        _templateTypeRepository.GetEmailTemplate(id).ToDto();
+        _templateTypeRepository.GetEmailTemplate(id).Match(x => x.ToDto());
 
     /// <inheritdoc />
     public Result UpdateBody(Guid emailTemplateId, EmailBodyContentDto emailBodyContentDto) =>
         Result
             .Try(() =>
             {
-                var emailTemplate = _templateTypeRepository.GetEmailTemplate(emailTemplateId);
+                var emailTemplate = _templateTypeRepository.GetEmailTemplate(emailTemplateId).Value;
 
                 var emailBodyContent = emailBodyContentDto.ToEntity(
                     emailTemplate.TemplateType.AcceptedMergeTags
@@ -99,6 +100,13 @@ public class EmailTemplateService(IUnitOfWork unitOfWork) : IEmailTemplateServic
             .Try(() =>
             {
                 var emailTemplate = _templateTypeRepository.GetById(emailTemplateId);
+
+                if (mailingQueueViewer.PeekEmail(emailTemplateId, out _))
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot delete email template {emailTemplateId} as it is being used in the mailing queue"
+                    );
+                }
 
                 _templateTypeRepository.Delete(emailTemplate);
 
