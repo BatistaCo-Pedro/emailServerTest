@@ -37,7 +37,7 @@ public class EmailPresetService(IUnitOfWork unitOfWork) : IEmailPresetService
 
                 var emailTemplate = _templateTypeRepository.GetEmailTemplate(
                     emailPresetDto.EmailTemplateId
-                );
+                ).Value;
 
                 emailTemplate.AddPreset(emailPreset);
 
@@ -59,7 +59,7 @@ public class EmailPresetService(IUnitOfWork unitOfWork) : IEmailPresetService
         return Result
             .Try(() =>
             {
-                var emailTemplate = _templateTypeRepository.GetEmailTemplate(emailTemplateId);
+                var emailTemplate = _templateTypeRepository.GetEmailTemplate(emailTemplateId).Value;
 
                 var emailPreset = emailTemplate.GetEmailPreset(emailPresetId);
 

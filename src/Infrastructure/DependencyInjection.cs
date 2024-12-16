@@ -1,4 +1,5 @@
 using App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.Events;
+using App.Server.Notification.Infrastructure.Implementations;
 using App.Server.Notification.Infrastructure.Messaging.DomainEvents.Consumers;
 
 namespace App.Server.Notification.Infrastructure;
@@ -57,12 +58,15 @@ public static class DependencyInjection
                 .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString))
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
+                .UseSerilogLogProvider()
         );
 
         services.AddHangfireServer();
 
         // Add hangfire related services such as a queue service
+        services.AddScoped<IMailingQueue, HangfireQueue>();
+        services.AddScoped<IMailingQueueViewer, MailingQueueViewer>();
+        services.AddScoped<IEmailSender, EmailSender>();
 
         return services;
     }

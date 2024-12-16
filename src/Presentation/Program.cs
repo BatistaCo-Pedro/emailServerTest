@@ -28,6 +28,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseInfrastructure();
+
 app.MapHealthChecks("/health");
 
 app.MapControllers();

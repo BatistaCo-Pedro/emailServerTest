@@ -21,19 +21,21 @@ public interface IMailingQueueViewer
     public bool PeekEmail(Guid emailTemplateId, out EmailRequestDto? emailRequestDto);
 }
 
+[Serializable]
+[method: JsonConstructor]
 public record EmailRequestDto(
     Guid TemplateTypeId,
-    CultureCode CultureCode,
-    NonEmptyString SenderName,
-    NonEmptyString SenderEmail,
-    NonEmptyString RecipientName,
-    NonEmptyString RecipientEmail,
+    string CultureCode,
+    string SenderName,
+    string SenderEmail,
+    string RecipientName,
+    string RecipientEmail,
     ImmutableDictionary<string, object> MergeTagArguments,
     Guid? EmailTemplateId = null,
-    NonEmptyString? CustomSubject = null
+    string? CustomSubject = null
 ) : IDto, IEventMessage;
 
-public record ScheduledEmailRequestDto(EmailRequestDto EmailRequestDto, DateTimeOffset SendTime)
+public record ScheduledEmailRequestDto(EmailRequestDto EmailRequestDto, TimeSpan SendIn)
     : IDto,
         IEventMessage;
 

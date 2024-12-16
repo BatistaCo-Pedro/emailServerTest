@@ -20,7 +20,7 @@ internal class HangfireQueue(
     public string EnqueueScheduledEmail(ScheduledEmailRequestDto scheduledEmailRequestDto) =>
         jobClient.Schedule(
             () => emailSender.SendEmail(scheduledEmailRequestDto.EmailRequestDto),
-            scheduledEmailRequestDto.SendTime
+            scheduledEmailRequestDto.SendIn
         );
 
     public void AddRecurringEmail(RecurringEmailRequestDto recurringEmailRequestDto) =>
@@ -40,7 +40,7 @@ public class EmailSender(IUnitOfWork unitOfWork) : IEmailSender
 {
     public void SendEmail(EmailRequestDto emailRequestDto)
     {
-        var templateTypeRepository = unitOfWork.GetRepository<ITemplateTypeRepository>();
+        /*var templateTypeRepository = unitOfWork.GetRepository<ITemplateTypeRepository>();
 
         // if only type is provided, get the default template
         // var emailTemplate = templateType.DefaultEmailTemplate
@@ -74,6 +74,9 @@ public class EmailSender(IUnitOfWork unitOfWork) : IEmailSender
 
         // Send email
         // mail.Send();
+        */
+
+        Log.Information("Let's pretend an email was sent.");
     }
 }
 
@@ -81,7 +84,7 @@ public class MailingQueueViewer(IBackgroundJobClientV2 jobClient) : IMailingQueu
 {
     public bool PeekEmail(Guid emailTemplateId, out EmailRequestDto? emailRequestDto)
     {
-        var jobs = jobClient.Storage.GetMonitoringApi().EnqueuedJobs("default", 0, 1);
+        var jobs = jobClient.Storage.GetMonitoringApi().EnqueuedJobs("default", 0, 100);
 
         emailRequestDto = (EmailRequestDto?)
             jobs.Select(x =>
