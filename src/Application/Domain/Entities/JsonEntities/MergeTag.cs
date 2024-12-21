@@ -5,11 +5,16 @@ namespace App.Server.Notification.Application.Domain.Entities.JsonEntities;
 /// <summary>
 /// Base class for merge tags.
 /// </summary>
+/// <remarks>
+/// Merge tags should be a pure value object and not be tracked
+/// - due to current ef core limitations it must be configured as an Owned entity.
+/// </remarks>
+/// TODO: Update merge tag configuration to ComplexType as soon as https://github.com/dotnet/efcore/issues/31252 gets merged.
 public record MergeTag : IJsonEntity
 {
     /// <summary>
     /// Valid types for JSON values.
-    /// IMPORTANT: Valid types should only be primitive types.
+    /// IMPORTANT: Valid types should only be primitive types and the order matters e.g. DateOnly and TimeOnly before DateTime.
     /// </summary>
     protected static readonly ImmutableArray<Type> ValidTypes =
     [

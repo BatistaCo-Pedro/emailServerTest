@@ -71,9 +71,9 @@ internal static class ResultStringHelper
     /// </summary>
     /// <param name="errors">The error collection.</param>
     /// <returns>A string representation of the first error in the collection.</returns>
-    public static string GetResultErrorString(ImmutableList<IError> errors)
+    public static string GetResultErrorString(IEnumerable<IError> errors)
     {
-        var errorMessages = errors.Select(x => x.ToString());
+        var errorMessages = errors.Select(x => x.ToString()).ToImmutableList();
 
         return string.Join(", ", errorMessages);
     }

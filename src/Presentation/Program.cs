@@ -11,13 +11,17 @@ var connectionString =
 
 builder.AddSerilog();
 
-services.AddPresentation();
+services.AddPresentation().AddGlobalExceptionHandler();
+
+// Messaging
+services.AddEventHandlers();
+services.AddMessaging(configuration);
 
 // Infrastructure services
 services.AddDatabase(connectionString).AddBackgroundQueue(connectionString);
 
 // Application services
-services.AddApplicationServices();
+services.AddApplicationServices(configuration).AddCryptographicServices(configuration);
 
 var app = builder.Build();
 
@@ -28,13 +32,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseInfrastructure();
-
 app.MapHealthChecks("/health");
 
 app.MapControllers();
 
 app.UseSerilogRequestLogging();
+
+app.UseExceptionHandler();
 
 app.Run();
 

@@ -7,15 +7,45 @@ namespace App.Server.Notification.Application.Domain.Types;
 [JsonConverter(typeof(StringToWrapperJsonConverter<HtmlString>))]
 public record HtmlString : NonEmptyString, IStringWrapper<HtmlString>
 {
+    // This can be configured to allow more or less elements and attributes depending on the requirements.
+    private static readonly HtmlSanitizer Sanitizer;
+
+    private static readonly SanitizationInfoBuilder SanitizationInfoBuilder;
+
+    /// <summary>
+    /// Initializes static members of the <see cref="HtmlString"/> class and adds accepted values.
+    /// </summary>
+    static HtmlString()
+    {
+        SanitizationInfoBuilder = new SanitizationInfoBuilder();
+
+        Sanitizer = new HtmlSanitizer();
+        Sanitizer.AllowedAttributes.Add("class");
+        Sanitizer.AllowedSchemes.Add("mailto");
+        Sanitizer.AllowedSchemes.Add("tel");
+
+        // listen to removing events to log them
+        Sanitizer.RemovingAttribute += SanitizationInfoBuilder.AddRemovedAttribute;
+        Sanitizer.RemovingStyle += SanitizationInfoBuilder.AddRemovedStyle;
+        Sanitizer.RemovingTag += SanitizationInfoBuilder.AddRemovedTag;
+        Sanitizer.RemovingCssClass += SanitizationInfoBuilder.AddRemovedCssClass;
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="HtmlString"/> class.
     /// </summary>
     /// <param name="value">The non-empty string value to wrap.</param>
     public HtmlString(string value)
-        : base(value)
+        : base(Sanitizer.Sanitize(value))
     {
-        // TODO: Validate that the string is valid HTML.
-        // TODO: Sanitize the HTML string.
+        var sanitizationInfo = SanitizationInfoBuilder.Build();
+
+        if (sanitizationInfo.RemovedElements.Length == 0)
+        {
+            return;
+        }
+
+        Log.Information(sanitizationInfo.ToString());
     }
 
     /// <summary>

@@ -44,7 +44,7 @@ public static class StringHelper
     /// <param name="stringValue">The string value to parse.</param>
     /// <param name="type">The type to parse to.</param>
     /// <param name="cultureInfo">The culture info to use for formatting.</param>
-    /// <param name="result">The parsing result, null if it couldn't be parsed.</param>
+    /// <param name="value">The parsing result, null if it couldn't be parsed.</param>
     /// <returns>A bool defining if the result was successfully parsed.</returns>
     /// <remarks>
     /// Support <see cref="DateOnly"/>, <see cref="TimeOnly"/> and <see cref="Guid"/> besides the default conversion types.
@@ -55,65 +55,70 @@ public static class StringHelper
         string stringValue,
         Type type,
         CultureInfo? cultureInfo,
-        [NotNullWhen(true)] out object? result
+        [NotNullWhen(true)] out object? value
     )
     {
         var culture = cultureInfo ?? CultureInfo.InvariantCulture;
 
-        try
+        // The check done this way does not throw an exception.
+        if (!TypeDescriptor.GetConverter(type).CanConvertFrom(typeof(string)))
         {
-            result = Parse(stringValue, type, culture);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Couldn't parse value '{Value}' to type '{Type}'.", stringValue, type);
-            result = null;
+            value = null;
             return false;
         }
+
+        var parameters = new[] { typeof(string), typeof(IFormatProvider), type.MakeByRefType() };
+        var arguments = new object[] { stringValue, culture, null! };
+
+        var interfaceMap = type.GetInterfaceMap(typeof(IParsable<>).MakeGenericType(type));
+        var tryParseMethod = interfaceMap.TargetMethods.FirstOrDefault(x =>
+            parameters.SequenceEqual(x.GetParameters().Select(p => p.ParameterType))
+        );
+
+        var result = tryParseMethod?.Invoke(null, arguments);
+
+        value = arguments[2];
+        return result as bool? ?? false;
     }
 
     /// <summary>
-    /// Parses a string value to a specific type.
+    /// Parses a string to a specific type.
     /// </summary>
-    /// <param name="stringValue">The string value to parse.</param>
-    /// <param name="type">The type to parse to.</param>
-    /// <param name="cultureInfo">The culture info to use for formatting.</param>
-    /// <returns>The parsed type as an <see cref="object"/> - will always return the string value as last resort.</returns>
-    /// <exception cref="InvalidCastException">Couldn't be cast to <paramref name="type"/>.</exception>
-    /// <remarks>
-    /// Support <see cref="DateOnly"/>, <see cref="TimeOnly"/> and <see cref="Guid"/> besides the default conversion types.
-    /// See <see cref="Convert.ChangeType(object?, Type)"/> for more information about the default types.
-    /// Object, arrays and null are not supported.
-    /// </remarks>
-    public static object Parse(
-        NonEmptyString stringValue,
-        Type type,
-        CultureInfo? cultureInfo = null
-    )
+    /// <param name="stringValue">The string to parse.</param>
+    /// <param name="cultureInfo">The culture info for the parsing.</param>
+    /// <typeparam name="T">The type to cast to.</typeparam>
+    /// <returns>The parsed value as type <see cref="T"/>.</returns>
+    /// <exception cref="ArgumentException">Value couldn't be parsed.</exception>
+    public static T Parse<T>(string stringValue, CultureInfo? cultureInfo = null)
+        where T : IParsable<T>
     {
-        var culture = cultureInfo ?? CultureInfo.InvariantCulture;
+        if (TryParse(stringValue, typeof(T), cultureInfo, out var result))
+        {
+            return (T)result;
+        }
 
-        var parsedValue = SpecialParseableTypes
-            .FirstOrDefault(x => x == type)
-            ?.GetMethod("Parse", BindingFlags.Static | BindingFlags.Public, Params)!
-            .Invoke(null, [(string)stringValue, culture]);
-
-        return parsedValue ?? Convert.ChangeType(stringValue.Value, type, culture);
+        throw new ArgumentException(
+            $"Value '{stringValue}' couldn't be parsed to type {typeof(T).Name}."
+        );
     }
 
     /// <summary>
-    /// Param list of the parse method to get the parse method via reflection.
+    /// Parses a string to a specific type.
     /// </summary>
-    private static readonly Type[] Params = [typeof(string), typeof(IFormatProvider)];
+    /// <param name="stringValue">The string to parse.</param>
+    /// <param name="cultureInfo">The culture info for the parsing.</param>
+    /// <param name="type">The type to cast to.</param>
+    /// <returns>The parsed value as type <paramref name="type"/>.</returns>
+    /// <exception cref="ArgumentException">Value couldn't be parsed.</exception>
+    public static object Parse(string stringValue, Type type, CultureInfo? cultureInfo = null)
+    {
+        if (TryParse(stringValue, type, cultureInfo, out var result))
+        {
+            return result;
+        }
 
-    /// <summary>
-    /// Special parseable types not included in <see cref="Convert.ChangeType(object?, Type, IFormatProvider?)"/> but supported by us.
-    /// </summary>
-    private static readonly Type[] SpecialParseableTypes =
-    [
-        typeof(DateOnly),
-        typeof(TimeOnly),
-        typeof(Guid),
-    ];
+        throw new ArgumentException(
+            $"Value '{stringValue}' couldn't be parsed to type {type.Name}."
+        );
+    }
 }

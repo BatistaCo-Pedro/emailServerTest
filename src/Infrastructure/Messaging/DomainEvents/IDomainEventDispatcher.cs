@@ -1,4 +1,4 @@
-﻿namespace App.Server.Notification.Infrastructure.Messaging.DomainEvents;
+namespace App.Server.Notification.Infrastructure.Messaging.DomainEvents;
 
 /// <summary>
 /// Interface for domain event dispatchers.
@@ -9,5 +9,5 @@ public interface IDomainEventDispatcher
     /// Dispatches and clears all domain events from the given entities.
     /// </summary>
     /// <param name="entitiesWithEvents">The entities to dispatch and clear events for.</param>
-    public void DispatchAndClear(IEnumerable<Entity> entitiesWithEvents);
+    public Task DispatchAndClear(IEnumerable<Entity> entitiesWithEvents);
 }

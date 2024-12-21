@@ -17,25 +17,46 @@ namespace App.Server.Notification.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
+                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("Proxies:ChangeTracking", false)
+                .HasAnnotation("Proxies:CheckEquality", false)
+                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwner", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.DataOwner", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("SmtpSettings")
+                        .HasColumnType("text");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Stamp")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -45,7 +66,48 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.ToTable("DataOwner");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailBodyContent", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.EmailSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DataOwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DefaultEmailTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Stamp")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TemplateTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataOwnerId");
+
+                    b.HasIndex("DefaultEmailTemplateId");
+
+                    b.HasIndex("TemplateTypeId", "DataOwnerId", "DefaultEmailTemplateId")
+                        .IsUnique();
+
+                    b.ToTable("EmailSettings");
+                });
+
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailBodyContent", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -97,42 +159,7 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.ToTable("EmailBodyContent");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailPreset", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("DataOwnerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("EmailTemplateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Stamp")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DataOwnerId");
-
-                    b.HasIndex("EmailTemplateId");
-
-                    b.ToTable("EmailPreset");
-                });
-
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailTemplate", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailTemplate", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -179,13 +206,28 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.ToTable("EmailTemplate");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateType", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.TemplateType", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Stamp")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -196,9 +238,74 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.ToTable("TemplateType");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailBodyContent", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.DataOwner", b =>
                 {
-                    b.HasOne("App.Server.Notification.Application.Domain.Entities.EmailTemplate", "EmailTemplate")
+                    b.OwnsMany("App.Server.Notification.Application.Domain.Entities.JsonEntities.CustomMergeTag", "Data", b1 =>
+                        {
+                            b1.Property<Guid>("DataOwnerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasAnnotation("Relational:JsonPropertyName", "name");
+
+                            b1.Property<string>("ShortCode")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasAnnotation("Relational:JsonPropertyName", "shortCode");
+
+                            b1.Property<string>("StringValue")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasAnnotation("Relational:JsonPropertyName", "stringValue");
+
+                            b1.Property<string>("TypeName")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasAnnotation("Relational:JsonPropertyName", "typeName");
+
+                            b1.HasKey("DataOwnerId", "Id");
+
+                            b1.ToTable("DataOwner");
+
+                            b1.ToJson("Data");
+
+                            b1.WithOwner()
+                                .HasForeignKey("DataOwnerId");
+                        });
+
+                    b.Navigation("Data");
+                });
+
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.EmailSettings", b =>
+                {
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.DataOwner", null)
+                        .WithMany("EmailSettings")
+                        .HasForeignKey("DataOwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("DefaultEmailTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.TemplateType", null)
+                        .WithMany()
+                        .HasForeignKey("TemplateTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailBodyContent", b =>
+                {
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailTemplate", "EmailTemplate")
                         .WithMany("EmailBodyContents")
                         .HasForeignKey("EmailTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -243,76 +350,16 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.Navigation("MergeTags");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailPreset", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailTemplate", b =>
                 {
-                    b.HasOne("App.Server.Notification.Application.Domain.Entities.DataOwner", "DataOwner")
-                        .WithMany()
-                        .HasForeignKey("DataOwnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("App.Server.Notification.Application.Domain.Entities.EmailTemplate", "EmailTemplate")
-                        .WithMany("EmailPresets")
-                        .HasForeignKey("EmailTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsMany("App.Server.Notification.Application.Domain.Entities.JsonEntities.CustomMergeTag", "CustomMergeTags", b1 =>
-                        {
-                            b1.Property<Guid>("EmailPresetId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasAnnotation("Relational:JsonPropertyName", "name");
-
-                            b1.Property<string>("ShortCode")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasAnnotation("Relational:JsonPropertyName", "shortCode");
-
-                            b1.Property<string>("StringValue")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasAnnotation("Relational:JsonPropertyName", "stringValue");
-
-                            b1.Property<string>("TypeName")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasAnnotation("Relational:JsonPropertyName", "typeName");
-
-                            b1.HasKey("EmailPresetId", "Id");
-
-                            b1.ToTable("EmailPreset");
-
-                            b1.ToJson("CustomMergeTags");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EmailPresetId");
-                        });
-
-                    b.Navigation("CustomMergeTags");
-
-                    b.Navigation("DataOwner");
-
-                    b.Navigation("EmailTemplate");
-                });
-
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailTemplate", b =>
-                {
-                    b.HasOne("App.Server.Notification.Application.Domain.Entities.DataOwner", "DataOwner")
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.DataOwner", "DataOwner")
                         .WithMany()
                         .HasForeignKey("DataOwnerId");
 
-                    b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateType", "TemplateType")
+                    b.HasOne("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.TemplateType", "TemplateType")
                         .WithMany("EmailTemplates")
                         .HasForeignKey("TemplateTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("DataOwner");
@@ -320,7 +367,7 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.Navigation("TemplateType");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateType", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.TemplateType", b =>
                 {
                     b.OwnsMany("App.Server.Notification.Application.Domain.Entities.JsonEntities.MergeTag", "AcceptedMergeTags", b1 =>
                         {
@@ -359,14 +406,17 @@ namespace App.Server.Notification.Infrastructure.Migrations
                     b.Navigation("AcceptedMergeTags");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.EmailTemplate", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate.DataOwner", b =>
                 {
-                    b.Navigation("EmailBodyContents");
-
-                    b.Navigation("EmailPresets");
+                    b.Navigation("EmailSettings");
                 });
 
-            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateType", b =>
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.EmailTemplate", b =>
+                {
+                    b.Navigation("EmailBodyContents");
+                });
+
+            modelBuilder.Entity("App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.TemplateType", b =>
                 {
                     b.Navigation("EmailTemplates");
                 });

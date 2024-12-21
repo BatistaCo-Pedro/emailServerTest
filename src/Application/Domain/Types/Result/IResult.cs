@@ -66,90 +66,64 @@ public interface IAuditableResult<out TResult>
     /// Logs the result.
     /// </summary>
     /// <param name="messageTemplate">The message to log.</param>
-    /// <param name="context">The context from where the log comes.</param>
-    /// <param name="logLevel">The level which to log at.</param>
     /// <param name="propertyValues">The values to inject in the template.</param>
+    /// <param name="logLevel">The level which to log at.</param>
+    /// <param name="context">The context from where the log comes.</param>
     /// <returns>The result object.</returns>
     TResult Log(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        params object?[] propertyValues
+        [ConstantExpected] string messageTemplate = "",
+        object?[]? propertyValues = null,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(Log)
     );
 
     /// <summary>
-    /// Logs the result if successful.
+    /// Logs the result if the success state matches <paramref name="isSuccess"/>.
     /// </summary>
+    /// <param name="isSuccess">Boolean defining when to log.</param>
     /// <param name="messageTemplate">The message to log.</param>
-    /// <param name="context">The context from where the log comes.</param>
-    /// <param name="logLevel">The level which to log at.</param>
     /// <param name="propertyValues">The values to inject in the template.</param>
-    /// <returns>The result object.</returns>
-    TResult LogIfSuccess(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        params object?[] propertyValues
-    );
-
-    /// <summary>
-    /// Logs the result if successful.
-    /// </summary>
-    /// <param name="messageTemplate">The message to log.</param>
-    /// <param name="context">The context from where the log comes.</param>
     /// <param name="logLevel">The level which to log at.</param>
-    /// <param name="propertyValues">The values to inject in the template.</param>
+    /// <param name="context">The context from where the log comes.</param>
     /// <returns>The result object.</returns>
-    TResult LogIfFailure(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        params object?[] propertyValues
+    TResult LogIf(
+        bool isSuccess,
+        [ConstantExpected] string messageTemplate,
+        object?[] propertyValues,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(LogIf)
     );
 
     /// <summary>
     /// Logs the result.
     /// </summary>
     /// <param name="messageTemplate">The message template to log.</param>
-    /// <param name="context">The context from where the log comes.</param>
-    /// <param name="logLevel">The level which to log at.</param>
     /// <param name="propertyValuesSelector">A selector for the values to be injected in the template.</param>
+    /// <param name="logLevel">The level which to log at.</param>
+    /// <param name="context">The context from where the log comes.</param>
     /// <returns>The result object.</returns>
     TResult Log(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<TResult, object?[]> propertyValuesSelector
+        [ConstantExpected] string messageTemplate,
+        Func<TResult, object?[]> propertyValuesSelector,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(Log)
     );
 
     /// <summary>
-    /// Logs the result if successful.
+    /// Logs the result if the success state matches <paramref name="isSuccess"/>.
     /// </summary>
-    /// <param name="messageTemplate">The message to template log.</param>
-    /// <param name="context">The context from where the log comes.</param>
+    /// <param name="isSuccess">Boolean defining when to log.</param>
+    /// <param name="messageTemplate">The message to log.</param>
+    /// <param name="propertyValues">The values to inject in the template.</param>
     /// <param name="logLevel">The level which to log at.</param>
-    /// <param name="propertyValuesSelector">A selector for the values to be injected in the template.</param>
-    /// <returns>The result object.</returns>
-    TResult LogIfSuccess(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<TResult, object?[]> propertyValuesSelector
-    );
-
-    /// <summary>
-    /// Logs the result if successful.
-    /// </summary>
-    /// <param name="messageTemplate">The message to template log.</param>
     /// <param name="context">The context from where the log comes.</param>
-    /// <param name="logLevel">The level which to log at.</param>
-    /// <param name="propertyValuesSelector">A selector for the values to be injected in the template.</param>
     /// <returns>The result object.</returns>
-    TResult LogIfFailure(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<TResult, object?[]> propertyValuesSelector
+    TResult LogIf(
+        bool isSuccess,
+        [ConstantExpected] string messageTemplate,
+        Func<TResult, object?[]> propertyValues,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(LogIf)
     );
 }
 
@@ -250,6 +224,31 @@ public interface IActionableResult<TResult> : IResult
     /// <param name="results">The results to merge with.</param>
     /// <returns>A successful <see cref="Result"/> or one containing all merged errors.</returns>
     TResult MergeWith(params TResult[] results);
+
+    /// <summary>
+    /// Matches a success and failure function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <param name="onFailure">The function to be called on failure.</param>
+    /// <typeparam name="T">The return type.</typeparam>
+    /// <returns>An object of type <see cref="T"/>.</returns>
+    T Match<T>(Func<T> onSuccess, Func<IEnumerable<IError>, T> onFailure);
+
+    /// <summary>
+    /// Matches a success function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <returns>A <see cref="Result"/> object representing the result of the operation.</returns>
+    /// <remarks>
+    /// This method uses a default failure function that returns a failed result with the errors in the result.
+    /// </remarks>
+    Result Match(Func<Result> onSuccess);
+
+    /// <summary>
+    /// Matches the result to a <see cref="IActionResult"/> for the controllers.
+    /// </summary>
+    /// <returns>Either an <see cref="OkResult"/> or a <see cref="BadRequestObjectResult"/> depending on the success of the result.</returns>
+    IActionResult Match();
 }
 
 /// <summary>Defines an actionable result.</summary>
@@ -292,12 +291,8 @@ public interface IActionableResult<TValue, TResult> : IResult<TValue>
     /// <returns>A new instance of <typeparamref name="TResult" /> representing a failed result with the specified errors.</returns>
     static abstract TResult Fail(IEnumerable<IError> errors);
 
-    T Match<T>(Func<TValue, T> onSuccess, Func<IError, T> onError) where T : class;
-
-    Result<T> Match<T>(Func<TValue, T> onSuccess) where T : class;
-    
     /// <summary>
-    /// Wraps an asynchronous action in a try-catch block and returns a result.
+    /// Wraps an action in a try-catch block and returns a result.
     /// </summary>
     /// <param name="action">The action to wrap.</param>
     /// <param name="exceptionHandler">A custom exception handler to handle the caught exceptions.</param>
@@ -334,4 +329,50 @@ public interface IActionableResult<TValue, TResult> : IResult<TValue>
         Func<Exception, IError>? exceptionHandler = null,
         string context = nameof(TryAsync)
     );
+
+    /// <summary>
+    /// Matches a success and failure function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <param name="onFailure">The function to be called on failure.</param>
+    /// <remarks>
+    /// This method does not return a value.
+    /// </remarks>
+    void Match(Action<TValue> onSuccess, Action<IEnumerable<IError>> onFailure);
+
+    /// <summary>
+    /// Matches a success and failure function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <param name="onFailure">The function to be called on failure.</param>
+    /// <typeparam name="T">The return type.</typeparam>
+    /// <typeparam name="TValue">The type of the value contained within the result.</typeparam>
+    /// <returns>An object of type <see cref="T"/>.</returns>
+    T Match<T>(Func<TValue, T> onSuccess, Func<IEnumerable<IError>, T> onFailure);
+
+    /// <summary>
+    /// Matches a success function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <returns>A <see cref="Result{T}"/> object representing the result of the operation.</returns>
+    /// <remarks>
+    /// This method uses a default failure function that returns a failed result with the errors in the result.
+    /// </remarks>
+    Result<T> Match<T>(Func<TValue, Result<T>> onSuccess);
+
+    /// <summary>
+    /// Matches a success function for the result.
+    /// </summary>
+    /// <param name="onSuccess">The function to be called on success.</param>
+    /// <returns>A <see cref="Result"/> object representing the result of the operation.</returns>
+    /// <remarks>
+    /// This method uses a default failure function that returns a failed result with the errors in the result.
+    /// </remarks>
+    Result Match(Func<TValue, Result> onSuccess);
+
+    /// <summary>
+    /// Matches the result to a <see cref="IActionResult"/> for the controllers.
+    /// </summary>
+    /// <returns>Either an <see cref="OkObjectResult"/> or a <see cref="BadRequestObjectResult"/> depending on the success of the result.</returns>
+    IActionResult Match();
 }

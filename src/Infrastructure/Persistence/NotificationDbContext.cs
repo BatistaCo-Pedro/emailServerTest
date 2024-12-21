@@ -1,6 +1,3 @@
-using System.Collections.Concurrent;
-using App.Server.Notification.Infrastructure.Messaging.DomainEvents;
-
 namespace App.Server.Notification.Infrastructure.Persistence;
 
 // Learn more about disposal pattern: https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/implementing-dispose
@@ -20,43 +17,22 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
     /// Ctor for the <see cref="NotificationDbContext"/>.
     /// </summary>
     /// <param name="options">Options to create the database.</param>
-    /// <param name="domainEventDispatcher">The dispatcher for the domain events.</param>
+    /// <param name="domainEventDispatcher">The domain event to use - must be registered in the dependency container.</param>
     public NotificationDbContext(
         DbContextOptions<NotificationDbContext> options,
         IDomainEventDispatcher domainEventDispatcher
     )
-        : this(options)
-    {
-        _domainEventDispatcher = domainEventDispatcher;
-    }
-
-    /// <summary>
-    /// Ctor for the <see cref="NotificationDbContext"/>.
-    /// </summary>
-    /// <param name="options">Options to create the database.</param>
-    public NotificationDbContext(DbContextOptions<NotificationDbContext> options)
         : base(options)
     {
         Log.Debug("Creating {DbContext}", nameof(NotificationDbContext));
 
-        _domainEventDispatcher = new DefaultDomainEventDispatcher();
+        SavingChanges += OnSavingChanges;
 
-        SavingChanges += (_, _) => SavingChangesEvent();
+        _domainEventDispatcher = domainEventDispatcher;
 
+        // Register custom repositories
         RegisterRepository<ITemplateTypeRepository, TemplateType>(new TemplateTypeRepository(this));
-    }
-
-    public override int SaveChanges()
-    {
-        var entities = ChangeTracker
-            .Entries<Entity>()
-            .Select(x => x.Entity)
-            .Where(x => x.DomainEvents.Any())
-            .AsEnumerable();
-
-        _domainEventDispatcher.DispatchAndClear(entities);
-
-        return base.SaveChanges();
+        RegisterRepository<IDataOwnerRepository, DataOwner>(new DataOwnerRepository(this));
     }
 
     /// <inheritdoc />
@@ -86,6 +62,43 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
             .Property(x => x.JsonStructure)
             .HasConversion<CompressedJsonConverter>();
 
+        modelBuilder
+            .Entity<TemplateType>()
+            .HasMany(x => x.EmailTemplates)
+            .WithOne(x => x.TemplateType)
+            .HasForeignKey(x => x.TemplateTypeId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<EmailSettings>(c =>
+        {
+            c.HasOne<TemplateType>()
+                .WithMany()
+                .HasForeignKey(x => x.TemplateTypeId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            c.HasOne<EmailTemplate>()
+                .WithMany()
+                .HasForeignKey(x => x.DefaultEmailTemplateId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            c.HasOne<DataOwner>()
+                .WithMany(x => x.EmailSettings)
+                .HasForeignKey(x => x.DataOwnerId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            c.HasIndex(x => new
+                {
+                    x.TemplateTypeId,
+                    x.DataOwnerId,
+                    x.DefaultEmailTemplateId,
+                })
+                .IsUnique();
+        });
+
         base.OnModelCreating(modelBuilder);
     }
 
@@ -99,14 +112,48 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
         configurationBuilder
             .Properties<MergeTagShortCode>()
             .HaveConversion<MergeTagShortCodeConverter>();
+        configurationBuilder
+            .Properties<SmtpSettings>()
+            .HaveConversion<EncryptedSmtpSettingsConverter>();
+    }
+
+    /// <inheritdoc />
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        var entities = ChangeTracker
+            .Entries<Entity>()
+            .Select(x => x.Entity)
+            .Where(x => x.DomainEvents.Any())
+            .ToList();
+
+        _domainEventDispatcher.DispatchAndClear(entities).Wait();
+
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    /// <inheritdoc />
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var entities = ChangeTracker
+            .Entries<Entity>()
+            .Select(x => x.Entity)
+            .Where(x => x.DomainEvents.Any())
+            .AsEnumerable();
+
+        await _domainEventDispatcher.DispatchAndClear(entities);
+
+        return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     /// <inheritdoc />
     public bool RegisterRepository<TRepo, TEntity>(TRepo repository)
-        where TEntity : IAggregateRoot
+        where TEntity : AggregateRoot
         where TRepo : IRepository<TEntity>
     {
-        return _repositories.TryAdd(typeof(TEntity).Name, repository);
+        return _repositories.TryAdd(typeof(TRepo).Name, repository);
     }
 
     /// <inheritdoc />
@@ -144,21 +191,14 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                 {
                     action();
                     transaction.Commit();
-                    return Result
-                        .Ok()
-                        .Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                    return Result.Ok().Log(logLevel: LogEventLevel.Debug, context: loggingContext);
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
                     return Result
                         .Fail(ex.Message)
-                        .Log(
-                            LogEventLevel.Error,
-                            loggingContext,
-                            "Exception: {Message}",
-                            ex.Message
-                        );
+                        .Log(logLevel: LogEventLevel.Error, context: loggingContext);
                 }
             });
     }
@@ -181,19 +221,14 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                     transaction.Commit();
                     return Result<T>
                         .Ok(result)
-                        .Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                        .Log(logLevel: LogEventLevel.Debug, context: loggingContext);
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
                     return Result<T>
                         .Fail(ex.Message)
-                        .Log(
-                            LogEventLevel.Error,
-                            loggingContext,
-                            "Exception: {Message}",
-                            ex.Message
-                        );
+                        .Log(logLevel: LogEventLevel.Error, context: loggingContext);
                 }
             });
     }
@@ -214,11 +249,11 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                 if (!result.IsSuccess)
                 {
                     transaction.Rollback();
-                    return result.Log(LogEventLevel.Error, loggingContext, "Transaction failed");
+                    return result.Log(logLevel: LogEventLevel.Debug, context: loggingContext);
                 }
 
                 transaction.Commit();
-                return result.Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                return result.Log(logLevel: LogEventLevel.Debug, context: loggingContext);
             });
     }
 
@@ -241,21 +276,14 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                 {
                     await action();
                     await transaction.CommitAsync(cancellationToken);
-                    return Result
-                        .Ok()
-                        .Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                    return Result.Ok().Log(logLevel: LogEventLevel.Debug, context: loggingContext);
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return Result
                         .Fail(ex.Message)
-                        .Log(
-                            LogEventLevel.Error,
-                            loggingContext,
-                            "Exception: {Message}",
-                            ex.Message
-                        );
+                        .Log(logLevel: LogEventLevel.Error, context: loggingContext);
                 }
             });
     }
@@ -281,19 +309,14 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                     await transaction.CommitAsync(cancellationToken);
                     return Result<T>
                         .Ok(result)
-                        .Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                        .Log(logLevel: LogEventLevel.Debug, context: loggingContext);
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     return Result<T>
                         .Fail(ex.Message)
-                        .Log(
-                            LogEventLevel.Error,
-                            loggingContext,
-                            "Exception: {Message}",
-                            ex.Message
-                        );
+                        .Log(logLevel: LogEventLevel.Error, context: loggingContext);
                 }
             });
     }
@@ -314,11 +337,11 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
                 if (!result.IsSuccess)
                 {
                     await transaction.RollbackAsync();
-                    return result.Log(LogEventLevel.Error, loggingContext, "Transaction failed");
+                    return result.Log(logLevel: LogEventLevel.Error, context: loggingContext);
                 }
 
                 await transaction.CommitAsync();
-                return result.Log(LogEventLevel.Debug, loggingContext, "Transaction succeeded");
+                return result.Log(logLevel: LogEventLevel.Debug, context: loggingContext);
             });
     }
 
@@ -431,7 +454,20 @@ internal sealed class NotificationDbContext : DbContext, IUnitOfWork
         );
     }
 
-    private void SavingChangesEvent()
+    /// <summary>
+    /// Exception representing a custom repository not being registered withing the unit of work.
+    /// </summary>
+    private class CustomRepositoryNotRegisteredException : Exception
+    {
+        /// <summary>
+        /// Ctor for the <see cref="CustomRepositoryNotRegisteredException"/>.
+        /// </summary>
+        /// <param name="type">The type of the repository.</param>
+        public CustomRepositoryNotRegisteredException(Type type)
+            : base($"Custom repository of type {type.Name} not registered.") { }
+    }
+
+    private void OnSavingChanges(object? sender, SavingChangesEventArgs args)
     {
         foreach (var entry in ChangeTracker.Entries())
         {

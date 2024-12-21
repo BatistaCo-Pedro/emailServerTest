@@ -1,7 +1,3 @@
-using App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate.Events;
-using App.Server.Notification.Infrastructure.Implementations;
-using App.Server.Notification.Infrastructure.Messaging.DomainEvents.Consumers;
-
 namespace App.Server.Notification.Infrastructure;
 
 /// <summary>
@@ -23,21 +19,23 @@ public static class DependencyInjection
         string connectionString
     )
     {
+        services.AddScoped<IDomainEventDispatcher, MassTransitDomainEventDispatcher>();
+
         services.AddDbContext<NotificationDbContext>(options =>
-            options.UseNpgsql(
-                connectionString,
-                optionsBuilder =>
-                {
-                    optionsBuilder
-                        .EnableRetryOnFailure()
-                        .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                }
-            )
+            options
+                .UseLazyLoadingProxies()
+                .UseNpgsql(
+                    connectionString,
+                    optionsBuilder =>
+                    {
+                        optionsBuilder
+                            .EnableRetryOnFailure()
+                            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    }
+                )
         );
 
-        services.AddScoped<IUnitOfWork, NotificationDbContext>(sp =>
-            sp.GetRequiredService<NotificationDbContext>()
-        );
+        services.AddScoped<IUnitOfWork, NotificationDbContext>();
 
         return services;
     }
@@ -58,15 +56,12 @@ public static class DependencyInjection
                 .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString))
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseSerilogLogProvider()
+                .UseRecommendedSerializerSettings()
         );
 
         services.AddHangfireServer();
 
-        // Add hangfire related services such as a queue service
         services.AddScoped<IMailingQueue, HangfireQueue>();
-        services.AddScoped<IMailingQueueViewer, MailingQueueViewer>();
-        services.AddScoped<IEmailSender, EmailSender>();
 
         return services;
     }
@@ -78,6 +73,9 @@ public static class DependencyInjection
     /// <param name="configuration">Configuration object with the messaging configuration.</param>
     /// <returns>The service collection.</returns>
     /// <exception cref="ApplicationException">Messaging settings not found in configuration object.</exception>
+    /// <remarks>
+    /// This method adds consumers based on the event handlers registered in the application layer.
+    /// </remarks>
     public static IServiceCollection AddMessaging(
         this IServiceCollection services,
         IConfiguration configuration
@@ -87,12 +85,9 @@ public static class DependencyInjection
             configuration.GetSection("MessagingSettings").Get<MessagingSettings>()
             ?? throw new ApplicationException("Messaging settings not found");
 
-        services.AddMediator(config =>
-        {
-            config.AddConsumer<BaseConsumer<TestEvent>>();
-        });
+        // Domain events mediator
+        services.AddMediator(config => RegisterDomainConsumers(config, services));
 
-        // MassTransit
         services.AddMassTransit(busConfiguration =>
         {
             //configureBus(busConfiguration);
@@ -125,5 +120,30 @@ public static class DependencyInjection
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers all consumers for domain events.
+    /// </summary>
+    /// <param name="configurator">The <see cref="MassTransit"/> <see cref="IMediatorRegistrationConfigurator"/>.</param>
+    /// <param name="serviceCollection">The service collection to extend.</param>
+    public static void RegisterDomainConsumers(
+        IMediatorRegistrationConfigurator configurator,
+        IServiceCollection serviceCollection
+    )
+    {
+        var types = serviceCollection.Select(x => x.ImplementationType).OfType<Type>().ToArray();
+
+        foreach (var eventHandlerType in TypeHelper.GetEventHandlerTypes(types))
+        {
+            if (!TypeHelper.IsDomainEvent(eventHandlerType.Key))
+            {
+                continue;
+            }
+
+            var consumerType = typeof(Consumer<>).MakeGenericType(eventHandlerType.Key);
+
+            configurator.AddConsumer(consumerType);
+        }
     }
 }

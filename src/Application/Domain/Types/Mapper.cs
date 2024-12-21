@@ -14,35 +14,18 @@ public static partial class Mapper
     /// </summary>
     /// <param name="emailTemplate">The entity to map.</param>
     /// <returns>A <see cref="ReadEmailTemplateDto"/> representing the <paramref name="emailTemplate"/>.</returns>
-    [MapPropertyFromSource(
-        nameof(ReadEmailTemplateDto.EmailJsonStructures),
-        Use = nameof(GetEmailTemplateBodyStructures)
-    )]
     public static partial ReadEmailTemplateDto ToDto(this EmailTemplate emailTemplate);
 
     /// <summary>
     /// Maps an <see cref="CreateEmailTemplateDto"/> to an <see cref="EmailTemplate"/>.
     /// </summary>
     /// <param name="createEmailTemplateDto">The dto to map.</param>
-    /// <param name="emailBodyContent"></param>
+    /// <param name="emailBodyContent">The first email body content from the email template.</param>
     /// <returns>A <see cref="EmailTemplate"/> entity from the <paramref name="createEmailTemplateDto"/>.</returns>
     public static partial EmailTemplate ToEntity(
-        this CreateEmailTemplateDto createEmailTemplateDto, EmailBodyContent emailBodyContent
+        this CreateEmailTemplateDto createEmailTemplateDto,
+        EmailBodyContent emailBodyContent
     );
-
-    /// <summary>
-    /// Maps an <see cref="EmailPreset"/> to an <see cref="EmailPresetDto"/>.
-    /// </summary>
-    /// <param name="emailPreset">The entity to map.</param>
-    /// <returns>A <see cref="EmailPresetDto"/> representing the <paramref name="emailPreset"/>.</returns>
-    public static partial EmailPresetDto ToDto(this EmailPreset emailPreset);
-
-    /// <summary>
-    /// Maps an <see cref="EmailPresetDto"/> to an <see cref="EmailPreset"/>.
-    /// </summary>
-    /// <param name="emailPresetDto">The dto to map.</param>
-    /// <returns>A <see cref="EmailPreset"/> entity from the <paramref name="emailPresetDto"/>.</returns>
-    public static partial EmailPreset ToEntity(this EmailPresetDto emailPresetDto);
 
     /// <summary>
     /// Maps a <see cref="DataOwner"/> to a <see cref="DataOwnerDto"/>.
@@ -73,19 +56,22 @@ public static partial class Mapper
     public static partial TemplateType ToEntity(this TemplateTypeDto templateTypeDto);
 
     /// <summary>
-    /// Maps a <see cref="EmailBodyContent"/> to a <see cref="EmailBodyContentDto"/>.
+    /// Maps a <see cref="EmailBodyContent"/> to a <see cref="CreateEmailBodyContentDto"/>.
     /// </summary>
     /// <param name="emailBodyContent">The entity to map.</param>
-    /// <returns>A <see cref="EmailBodyContentDto"/> representing the <paramref name="emailBodyContent"/>.</returns>
-    public static partial EmailBodyContentDto ToDto(this EmailBodyContent emailBodyContent);
+    /// <returns>A <see cref="CreateEmailBodyContentDto"/> representing the <paramref name="emailBodyContent"/>.</returns>
+    public static partial ReadEmailBodyContentDto ToDto(this EmailBodyContent emailBodyContent);
 
     /// <summary>
-    /// Maps a <see cref="EmailBodyContentDto"/> to a <see cref="EmailBodyContent"/>.
+    /// Maps a <see cref="CreateEmailBodyContentDto"/> to a <see cref="EmailBodyContent"/>.
     /// </summary>
     /// <param name="emailBodyContentDto">The dto to map.</param>
-    /// <param name="acceptedMergeTags">The <see cref="ImmutableHashSet{T}"/> of accepted merge tags for the type this content is being created for.</param>
+    /// <param name="acceptedMergeTags">The accepted merge tags coming from the template type.</param>
     /// <returns>An <see cref="EmailBodyContent"/> entity from the <paramref name="emailBodyContentDto"/>.</returns>
-    public static partial EmailBodyContent ToEntity(this EmailBodyContentDto emailBodyContentDto, IEnumerable<MergeTag> acceptedMergeTags);
+    public static partial EmailBodyContent ToEntity(
+        this CreateEmailBodyContentDto emailBodyContentDto,
+        IEnumerable<MergeTag> acceptedMergeTags
+    );
 
     /// <summary>
     /// Maps a <see cref="CustomMergeTag"/> to a <see cref="CustomMergeTagDto"/>.
@@ -100,8 +86,4 @@ public static partial class Mapper
     /// <param name="customMergeTagDto">The dto to map.</param>
     /// <returns>An <see cref="CustomMergeTag"/> entity from the <paramref name="customMergeTagDto"/>.</returns>
     public static partial CustomMergeTag ToEntity(this CustomMergeTagDto customMergeTagDto);
-
-    private static ImmutableList<JsonDocument> GetEmailTemplateBodyStructures(
-        EmailTemplate emailTemplate
-    ) => emailTemplate.EmailBodyContents.Select(x => x.JsonStructure).ToImmutableList();
 }

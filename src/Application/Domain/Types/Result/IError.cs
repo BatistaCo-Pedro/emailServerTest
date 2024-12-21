@@ -52,25 +52,6 @@ public class Error : IError
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Error"/>
-    /// class with the specified error message.
-    /// </summary>
-    /// <param name="exception">The exception.</param>
-    public Error(Exception exception)
-    {
-        Message = exception.Message;
-        Metadata = new Dictionary<string, object>
-        {
-            { "StackTrace", exception.StackTrace ?? string.Empty },
-            { "ExceptionType", exception.GetType().Name },
-            { "InnerException", exception.InnerException?.Message ?? string.Empty },
-            { "InnerExceptionType", exception.InnerException?.GetType().Name ?? string.Empty },
-            { "Source", exception.Source ?? string.Empty },
-            { "FullString", exception.ToString() }
-        }.ToFrozenDictionary();
-    }
-    
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Error"/>
     /// class with the specified error message and metadata.
     /// </summary>
     /// <param name="message">The error message.</param>

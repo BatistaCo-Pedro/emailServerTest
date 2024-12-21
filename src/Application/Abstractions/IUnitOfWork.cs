@@ -10,7 +10,7 @@ public interface IUnitOfWork : IDisposable
     /// <summary>
     /// Gets a repository.
     /// </summary>
-    /// <typeparam name="TRepo"></typeparam>
+    /// <typeparam name="TRepo">The type of the repo to get.</typeparam>
     /// <returns>The repository as <c>T</c>.</returns>
     /// <exception cref="ArgumentException">Repository not found.</exception>
     public TRepo GetRepository<TRepo>()
@@ -21,9 +21,9 @@ public interface IUnitOfWork : IDisposable
     /// </summary>
     /// <typeparam name="TEntity">The type of the entity.</typeparam>
     /// <typeparam name="TRepo">The type of the repo.</typeparam>
-    /// <returns></returns>
+    /// <returns>A boolean defining the result of the registration.</returns>
     public bool RegisterRepository<TRepo, TEntity>(TRepo repository)
-        where TEntity : IAggregateRoot
+        where TEntity : AggregateRoot
         where TRepo : IRepository<TEntity>;
 
     /// <summary>

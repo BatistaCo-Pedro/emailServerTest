@@ -5,4 +5,4 @@ namespace App.Server.Notification.Application.Abstractions;
 /// </summary>
 /// <typeparam name="TEntity">The type of the entity for the repo.</typeparam>
 public interface ICrudRepository<TEntity> : IReadRepository<TEntity>, IWriteRepository<TEntity>
-    where TEntity : Entity;
+    where TEntity : AggregateRoot;

@@ -36,6 +36,14 @@ public static class DependencyInjection
         return services;
     }
 
+    public static IServiceCollection AddGlobalExceptionHandler(this IServiceCollection services)
+    {
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
+
+        return services;
+    }
+
     /// <summary>
     /// Adds serilog logging to the application.
     /// </summary>

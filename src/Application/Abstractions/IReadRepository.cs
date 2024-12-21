@@ -5,7 +5,7 @@ namespace App.Server.Notification.Application.Abstractions;
 /// </summary>
 /// <typeparam name="TEntity">The type this repository acts for. Must be an <see cref="Entity"/>.</typeparam>
 public interface IReadRepository<TEntity> : IRepository<TEntity>
-    where TEntity : Entity
+    where TEntity : AggregateRoot
 {
     /// <summary>
     /// Gets all entities from the table.
@@ -19,7 +19,7 @@ public interface IReadRepository<TEntity> : IRepository<TEntity>
     /// <param name="condition">The condition to get entities by.</param>
     /// <param name="orderBy">The condition to order by.</param>
     /// <param name="includeProperties">The properties to include.</param>
-    /// <returns>An <see cref="IEnumerable"/> with entities matching the condition parameter.</returns>
+    /// <returns>A <see cref="IQueryable"/> with entities matching the condition parameter.</returns>
     IEnumerable<TEntity> GetByCondition(
         Expression<Func<TEntity, bool>> condition,
         Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
@@ -31,5 +31,5 @@ public interface IReadRepository<TEntity> : IRepository<TEntity>
     /// </summary>
     /// <param name="id">The id from the entity.</param>
     /// <returns>A <see cref="Result"/> with the entity which matched the id or an error.</returns>
-    TEntity GetById(Guid id);
+    Result<TEntity> GetById(Guid id);
 }

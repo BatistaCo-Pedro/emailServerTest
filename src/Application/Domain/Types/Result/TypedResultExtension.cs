@@ -8,49 +8,38 @@ namespace App.Server.Notification.Application.Domain.Types.Result;
 public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
 {
     /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
     public Result<TValue> Log(
-        in LogEventLevel logLevel,
-        string context,
-        [ConstantExpected] string messageTemplate,
-        params object?[] propertyValues
+        [ConstantExpected] string messageTemplate = "",
+        object?[]? propertyValues = null,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(Log)
     )
     {
         var template = "Context: {Context} - Result: {Result} - Message: " + messageTemplate;
-        var allPropertyValues = new object?[propertyValues.Length + 2];
+        var allPropertyValues = new object?[(propertyValues?.Length ?? 0) + 2];
         allPropertyValues[0] = context;
         allPropertyValues[1] = ToString();
-        propertyValues.CopyTo(allPropertyValues, 2);
+        propertyValues?.CopyTo(allPropertyValues, 2);
 
         Serilog.Log.Write(logLevel, template, allPropertyValues);
         return this;
     }
 
     /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
-    public Result<TValue> LogIfSuccess(
-        in LogEventLevel logLevel,
-        string context,
+    public Result<TValue> LogIf(
+        bool isSuccess,
         [ConstantExpected] string messageTemplate,
-        params object?[] propertyValues
-    ) => IsSuccess ? Log(logLevel, context, messageTemplate, propertyValues) : this;
+        object?[]? propertyValues = null,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(LogIf)
+    ) => IsSuccess == isSuccess ? Log(messageTemplate, propertyValues, logLevel, context) : this;
 
     /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
-    public Result<TValue> LogIfFailure(
-        in LogEventLevel logLevel,
-        string context,
-        [ConstantExpected] string messageTemplate,
-        params object?[] propertyValues
-    ) => !IsSuccess ? Log(logLevel, context, messageTemplate, propertyValues) : this;
-
-    /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
     public Result<TValue> Log(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<Result<TValue>, object?[]> propertyValuesSelector
+        [ConstantExpected] string messageTemplate,
+        Func<Result<TValue>, object?[]> propertyValuesSelector,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(Log)
     )
     {
         var template = "Context: {Context} - Result: {Result} - Message: " + messageTemplate;
@@ -66,22 +55,13 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
     }
 
     /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
-    public Result<TValue> LogIfSuccess(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<Result<TValue>, object?[]> propertyValuesSelector
-    ) => IsSuccess ? Log(logLevel, context, messageTemplate, propertyValuesSelector) : this;
-
-    /// <inheritdoc />
-    [MessageTemplateFormatMethod(nameof(messageTemplate))]
-    public Result<TValue> LogIfFailure(
-        in LogEventLevel logLevel,
-        string context,
-        string messageTemplate,
-        Func<Result<TValue>, object?[]> propertyValuesSelector
-    ) => !IsSuccess ? Log(logLevel, context, messageTemplate, propertyValuesSelector) : this;
+    public Result<TValue> LogIf(
+        bool isSuccess,
+        [ConstantExpected] string messageTemplate,
+        Func<Result<TValue>, object?[]> propertyValues,
+        in LogEventLevel logLevel = LogEventLevel.Information,
+        [CallerMemberName] string context = nameof(LogIf)
+    ) => IsSuccess == isSuccess ? Log(messageTemplate, propertyValues, logLevel, context) : this;
 
     /// <inheritdoc />
     public static Result<TValue> Try(
@@ -96,8 +76,8 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
-                .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+                .Log(logLevel: LogEventLevel.Error, context: context);
         }
     }
 
@@ -114,8 +94,8 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
-                .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+                .Log(logLevel: LogEventLevel.Error, context: context);
         }
     }
 
@@ -132,8 +112,8 @@ public sealed partial class Result<TValue> : IAuditableResult<Result<TValue>>
         }
         catch (Exception ex)
         {
-            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex))
-                .Log(LogEventLevel.Error, context, "Exception: {Exception}", ex.Message);
+            return Fail(exceptionHandler?.Invoke(ex) ?? new Error(ex.Message))
+                .Log(logLevel: LogEventLevel.Error, context: context);
         }
     }
 }

@@ -122,14 +122,6 @@ public sealed partial class Result<TValue> : IActionableResult<TValue, Result<TV
     }
 
     /// <inheritdoc />
-    public T Match<T>(Func<TValue, T> onSuccess, Func<IError, T> onError)
-        where T : class => IsSuccess ? onSuccess(Value) : onError(Errors.First());
-
-    /// <inheritdoc />
-    public Result<T> Match<T>(Func<TValue, T> onSuccess)
-        where T : class => IsSuccess ? onSuccess(Value) : Result<T>.Fail(Errors);
-
-    /// <inheritdoc />
     public bool HasError<TError>()
         where TError : IError => Errors.Any(e => e is TError);
 
@@ -142,6 +134,37 @@ public sealed partial class Result<TValue> : IActionableResult<TValue, Result<TV
         if (!IsSuccess)
             throw new ResultFailedException(this);
     }
+
+    /// <inheritdoc />
+    public void Match(Action<TValue> onSuccess, Action<IEnumerable<IError>> onFailure)
+    {
+        if (IsSuccess)
+        {
+            onSuccess(Value);
+        }
+        else
+        {
+            onFailure(Errors);
+        }
+    }
+
+    /// <inheritdoc />
+    public T Match<T>(Func<TValue, T> onSuccess, Func<IEnumerable<IError>, T> onFailure) =>
+        IsSuccess ? onSuccess(Value) : onFailure(Errors);
+
+    /// <inheritdoc />
+    public Result<T> Match<T>(Func<TValue, Result<T>> onSuccess) =>
+        IsSuccess ? onSuccess(Value) : Result<T>.Fail(Errors);
+
+    /// <inheritdoc />
+    public Result Match(Func<TValue, Result> onSuccess) =>
+        IsSuccess ? onSuccess(Value) : Result.Fail(Errors);
+
+    /// <inheritdoc />
+    public IActionResult Match() =>
+        IsSuccess
+            ? new OkObjectResult(Value)
+            : new BadRequestObjectResult(ResultStringHelper.GetResultErrorString(Errors));
 
     /// <summary>
     /// Implicitly convert an error to a failed result.
@@ -161,9 +184,9 @@ public sealed partial class Result<TValue> : IActionableResult<TValue, Result<TV
     /// </summary>
     /// <param name="error">The error to convert and include in the result.</param>
     /// <returns>A failed <see cref="Result{TValue}"/> with the error.</returns>
-    public static implicit operator Result<TValue>(Error error)
+    public static implicit operator Result<TValue>(Error? error)
     {
-        return Fail(error);
+        return Fail(error ?? Error.Empty);
     }
 
     /// <summary>

@@ -8,5 +8,6 @@ public interface IRepository;
 /// <summary>
 /// Generic repository interface.
 /// </summary>
-/// <typeparam name="T">The generic type of the interface.</typeparam>
-public interface IRepository<T> : IRepository;
+/// <typeparam name="TEntity">The type of the entity. Must be <see cref="AggregateRoot"/>.</typeparam>
+public interface IRepository<TEntity> : IRepository
+    where TEntity : AggregateRoot;

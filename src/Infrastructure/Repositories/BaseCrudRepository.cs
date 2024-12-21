@@ -6,7 +6,7 @@ namespace App.Server.Notification.Infrastructure.Repositories;
 /// <param name="db">The context of the database.</param>
 /// <typeparam name="TEntity">The type of entity this repository acts for.</typeparam>
 internal class BaseCrudRepository<TEntity>(NotificationDbContext db) : ICrudRepository<TEntity>
-    where TEntity : Entity
+    where TEntity : AggregateRoot
 {
     /// <inheritdoc />
     public virtual IEnumerable<TEntity> GetAll()
@@ -37,9 +37,10 @@ internal class BaseCrudRepository<TEntity>(NotificationDbContext db) : ICrudRepo
     }
 
     /// <inheritdoc />
-    public virtual TEntity GetById(Guid id) =>
-        db.Set<TEntity>().Find(id)
-        ?? throw new ArgumentException($"Entity {typeof(TEntity).Name} with ID: `{id}` not found.");
+    public virtual Result<TEntity> GetById(Guid id) =>
+        db.Set<TEntity>()
+            .Find(id)
+            .ToResult($"Entity {typeof(TEntity).Name} with ID: `{id}` not found.");
 
     /// <inheritdoc />
     public virtual void Create(params TEntity[] entities) => db.Set<TEntity>().AddRange(entities);

@@ -78,6 +78,19 @@ public sealed partial class Result : IActionableResult<Result>
     }
 
     /// <inheritdoc />
+    public T Match<T>(Func<T> onSuccess, Func<IEnumerable<IError>, T> onFailure) =>
+        IsSuccess ? onSuccess() : onFailure(Errors);
+
+    /// <inheritdoc />
+    public Result Match(Func<Result> onSuccess) => IsSuccess ? onSuccess() : Fail(Errors);
+
+    /// <inheritdoc />
+    public IActionResult Match() =>
+        IsSuccess
+            ? new OkResult()
+            : new BadRequestObjectResult(ResultStringHelper.GetResultErrorString(Errors));
+
+    /// <inheritdoc />
     public static Result Fail(IError error) => new(error);
 
     /// <inheritdoc />
@@ -99,9 +112,9 @@ public sealed partial class Result : IActionableResult<Result>
     /// </summary>
     /// <param name="error">The error to convert and include in the result.</param>
     /// <returns>A failed <see cref="Result"/> with the error.</returns>
-    public static implicit operator Result(Error error)
+    public static implicit operator Result(Error? error)
     {
-        return Fail(error);
+        return Fail(error ?? Error.Empty);
     }
 
     /// <summary>

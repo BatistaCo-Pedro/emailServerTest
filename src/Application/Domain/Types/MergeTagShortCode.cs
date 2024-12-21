@@ -8,7 +8,7 @@ namespace App.Server.Notification.Application.Domain.Types;
 public record MergeTagShortCode : NonEmptyString, IStringWrapper<MergeTagShortCode>
 {
     /// <summary>
-    /// The begin marker for a merge tag.
+    /// The beginning marker for a merge tag.
     /// </summary>
     internal const string MergeTagBeginMarker = "{{";
 
@@ -41,7 +41,7 @@ public record MergeTagShortCode : NonEmptyString, IStringWrapper<MergeTagShortCo
                 $"""
                 Short code {shortCode} does not fulfill all requirements.
                 Short codes must start with '{MergeTagBeginMarker}' and end with '{MergeTagEndMarker}' 
-                and not contain any disallowed characters.
+                and only contain allowed characters.
                 Allowed characters: {AllowedCharacters}
                 """
             );
@@ -52,7 +52,6 @@ public record MergeTagShortCode : NonEmptyString, IStringWrapper<MergeTagShortCo
     /// Represents the short code without the markers.
     /// </summary>
     public NonEmptyString ShortCodeWithoutMarkers => GetNameWithinMarkers(Value);
-
 
     /// <inheritdoc/>
     public new static MergeTagShortCode Create(string value) => new(value);
@@ -82,23 +81,25 @@ public record MergeTagShortCode : NonEmptyString, IStringWrapper<MergeTagShortCo
     /// </summary>
     private static readonly Predicate<string> BreaksAnyRule = shortCode =>
     {
-        string nameWithinMarkers = GetNameWithinMarkers(shortCode);
-
-        return nameWithinMarkers.Any(c => !AllowedCharacters.Contains(c))
-            || shortCode.LastIndexOf(MergeTagBeginMarker, StringComparison.Ordinal) != 0 // begin marker is at the start
+        return shortCode.LastIndexOf(MergeTagBeginMarker, StringComparison.Ordinal) != 0 // begin marker is at the start
             || shortCode.IndexOf(MergeTagEndMarker, StringComparison.Ordinal)
-                != shortCode.Length - MergeTagBeginMarker.Length; // end marker is at the end
+                != shortCode.Length - MergeTagBeginMarker.Length
+            || GetNameWithinMarkers(shortCode).Any(c => !AllowedCharacters.Contains(c)); // end marker is at the end
     };
-    
+
     /// <summary>
     /// Gets the name within the markers.
     /// </summary>
     /// <param name="shortCode">The short code to get the name from.</param>
     /// <returns>A <see cref="NonEmptyString"/> with the name.</returns>
-    private static NonEmptyString GetNameWithinMarkers(string shortCode)
+    private static string GetNameWithinMarkers(string shortCode)
     {
         var beginIndex = shortCode.IndexOf(MergeTagBeginMarker, StringComparison.Ordinal);
         var endIndex = shortCode.LastIndexOf(MergeTagEndMarker, StringComparison.Ordinal);
-        return shortCode.Substring(beginIndex + MergeTagBeginMarker.Length, endIndex - beginIndex);
+
+        return shortCode.Substring(
+            beginIndex + MergeTagBeginMarker.Length,
+            endIndex - beginIndex - MergeTagEndMarker.Length
+        );
     }
 }

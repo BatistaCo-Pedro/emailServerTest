@@ -5,42 +5,44 @@ namespace App.Server.Notification.Application.Abstractions;
 /// </summary>
 public interface IMailingQueue
 {
-    public string EnqueueEmail(EmailRequestDto emailRequestDto);
+    /// <summary>
+    /// Enqueues an email to be sent.
+    /// </summary>
+    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <returns>A job identifier for the created scheduled email.</returns>
+    public NonEmptyString EnqueueEmail(EmailInfo emailInfo);
 
-    public string EnqueueScheduledEmail(ScheduledEmailRequestDto scheduledEmailRequestDto);
+    /// <summary>
+    /// Enqueues an email to be sent after a certain amount of time.
+    /// </summary>
+    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <param name="sendAt"><see cref="DateTimeOffset"/> defining when to send the email.</param>
+    /// <returns>A job identifier for the created scheduled email.</returns>
+    public NonEmptyString EnqueueScheduledEmail(EmailInfo emailInfo, DateTimeOffset sendAt);
 
-    //public bool DequeueScheduledEmail(string jobId);
+    /// <summary>
+    /// Adds a recurring email to the queue. Recurring emails are sent according to the cron expression passed in.
+    /// </summary>
+    /// <param name="jobId">A job identifier.</param>
+    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <param name="cronExpression">The cron expression detailing when an email should be sent.</param>
+    public void AddRecurringEmail(
+        NonEmptyString jobId,
+        EmailInfo emailInfo,
+        NonEmptyString cronExpression
+    );
 
-    public void AddRecurringEmail(RecurringEmailRequestDto recurringEmailRequestDto);
-
-    //public void RemoveRecurringEmail(string jobId);
+    /// <summary>
+    /// Dequeues a scheduled email.
+    /// </summary>
+    /// <param name="jobId">The job identifier to dequeue.</param>
+    /// <returns>A boolean defining the success of the operation.</returns>
+    /// <remarks>
+    /// The job is not actually being deleted, this method changes only its state.
+    /// This operation does not provide guarantee that the job will not be performed.
+    /// If you are deleting a job that is performing right now, it will be performed anyway, despite of this call.
+    /// The method returns result of a state transition. It can be false if a job was expired,
+    /// its method does not exist or there was an exception during the state change process.
+    /// </remarks>
+    public bool DequeueScheduledEmail(NonEmptyString jobId);
 }
-
-public interface IMailingQueueViewer
-{
-    public bool PeekEmail(Guid emailTemplateId, out EmailRequestDto? emailRequestDto);
-}
-
-[Serializable]
-[method: JsonConstructor]
-public record EmailRequestDto(
-    Guid TemplateTypeId,
-    string CultureCode,
-    string SenderName,
-    string SenderEmail,
-    string RecipientName,
-    string RecipientEmail,
-    ImmutableDictionary<string, object> MergeTagArguments,
-    Guid? EmailTemplateId = null,
-    string? CustomSubject = null
-) : IDto, IEventMessage;
-
-public record ScheduledEmailRequestDto(EmailRequestDto EmailRequestDto, TimeSpan SendIn)
-    : IDto,
-        IEventMessage;
-
-public record RecurringEmailRequestDto(
-    EmailRequestDto EmailRequestDto,
-    string JobId,
-    string CronExpression
-) : IDto, IEventMessage;

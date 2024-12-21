@@ -9,7 +9,7 @@ public abstract class Entity
     /// The domain events that have been raised.
     /// </summary>
     private readonly HashSet<IDomainEvent> _domainEvents = [];
-    
+
     /// <summary>
     /// Gets the domain events.
     /// </summary>
@@ -25,7 +25,7 @@ public abstract class Entity
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public Guid Id { get; protected set; } = Ulid.NewUlid().ToGuid();
-    
+
     /// <summary>
     /// Raise a domain event.
     /// </summary>
