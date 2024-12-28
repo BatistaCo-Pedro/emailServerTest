@@ -7,6 +7,22 @@
 public record Image : Resource
 {
     /// <summary>
+    /// The supported image extensions.
+    /// </summary>
+    private static readonly ImmutableHashSet<string> SupportedExtensions = new[]
+    {
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "bmp",
+        "tif",
+        "tiff",
+        "svg", // should be validated
+        "webp"
+    }.ToImmutableHashSet(StringComparer.InvariantCultureIgnoreCase);
+    
+    /// <summary>
     /// Suffix for the content ID of the image - used for <see cref="LinkedResource"/>.
     /// </summary>
     public const string IdSuffix = "cid:";
@@ -38,6 +54,10 @@ public record Image : Resource
         : base(value, alt)
     {
         // Validations
+        if (!SupportedExtensions.Contains(MediaType))
+        {
+            throw new ArgumentException($"The media type '{MediaType}' is not supported.");
+        }
     }
 
     /// <summary>
