@@ -11,6 +11,7 @@ var connectionString =
 
 builder.AddSerilog();
 
+services.InitMimeInspectors();
 services.AddPresentation().AddGlobalExceptionHandler();
 
 // Messaging

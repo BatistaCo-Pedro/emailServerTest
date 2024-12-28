@@ -5,13 +5,16 @@ namespace App.Server.Notification.Application.Domain.Types;
 /// </summary>
 [Serializable]
 [JsonConverter(typeof(StringToWrapperJsonConverter<HtmlString>))]
-public record HtmlString : NonEmptyString, IStringWrapper<HtmlString>
+public partial record HtmlString : NonEmptyString, IStringWrapper<HtmlString>
 {
     // This can be configured to allow more or less elements and attributes depending on the requirements.
     private static readonly HtmlSanitizer Sanitizer;
 
     private static readonly SanitizationInfoBuilder SanitizationInfoBuilder;
 
+    [GeneratedRegex("<[^>]+?>")]
+    private static partial Regex MyRegex();
+    
     /// <summary>
     /// Initializes static members of the <see cref="HtmlString"/> class and adds accepted values.
     /// </summary>
@@ -47,6 +50,12 @@ public record HtmlString : NonEmptyString, IStringWrapper<HtmlString>
 
         Log.Information(sanitizationInfo.ToString());
     }
+
+    /// <summary>
+    /// Strips all HTML tags from the string.
+    /// </summary>
+    /// <returns>A <see cref="NonEmptyString"/> without any HTML.</returns>
+    public NonEmptyString StripHtml() => new(MyRegex().Replace(Value, string.Empty));
 
     /// <summary>
     /// Implicitly converts an HTML string to a string.

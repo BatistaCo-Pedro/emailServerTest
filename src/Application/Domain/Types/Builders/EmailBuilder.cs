@@ -22,7 +22,13 @@ public sealed class EmailBuilder
         MailAddress to,
         string subject,
         MailPriority priority = MailPriority.Normal
-    ) => _mailMessage = new MailMessage(from, to) { Subject = subject, Priority = priority };
+    ) =>
+        _mailMessage = new MailMessage(from, to)
+        {
+            Subject = subject,
+            Priority = priority,
+            BodyEncoding = Encoding.UTF8
+        };
 
     /// <summary>
     /// Adds an html body to the email.
@@ -61,7 +67,11 @@ public sealed class EmailBuilder
             return this;
         }
 
-        var plainView = AlternateView.CreateAlternateViewFromString(plainBody);
+        var plainView = AlternateView.CreateAlternateViewFromString(
+            plainBody,
+            Encoding.UTF8,
+            MediaTypeNames.Text.Plain
+        );
 
         if (ContainsViewOfType(MediaTypeNames.Text.Html))
         {
@@ -138,7 +148,7 @@ public sealed class EmailBuilder
     {
         private readonly AlternateView _htmlBody = AlternateView.CreateAlternateViewFromString(
             htmlBody,
-            null,
+            Encoding.UTF8,
             MediaTypeNames.Text.Html
         );
 

@@ -36,7 +36,7 @@ public class EmailSender(
             .Match(CreateSmtpClient, _ => CreateSmtpClient(defaultSmtpSettings.Value));
 
         return mailingService
-            .GetMailMessage(emailInfo)
+            .GetMailMessage(dataOwnerResult.Value, emailInfo)
             .Match(mailMessage => Result.Try(() => smtpClient.Send(mailMessage)));
     }
 

@@ -28,7 +28,7 @@ public record CustomMergeTag : MergeTag
     /// Mostly for serialization and deserialization between the database and the application.
     /// </remarks>
     [JsonConstructor]
-    protected CustomMergeTag(
+    public CustomMergeTag(
         NonEmptyString stringValue,
         NonEmptyString name,
         MergeTagShortCode shortCode,

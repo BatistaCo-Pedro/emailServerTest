@@ -64,7 +64,7 @@ public record MergeTag : IJsonEntity
     /// Constructor used to deserialize to an object. Protected to prevent direct use.
     /// </remarks>
     [JsonConstructor]
-    protected MergeTag(NonEmptyString name, MergeTagShortCode shortCode, NonEmptyString typeName)
+    public MergeTag(NonEmptyString name, MergeTagShortCode shortCode, NonEmptyString typeName)
         : this(GetTypeByName(typeName))
     {
         Name = name;

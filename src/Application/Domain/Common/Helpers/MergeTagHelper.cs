@@ -35,4 +35,38 @@ public static partial class MergeTagHelper
                 .ToImmutableHashSet();
         });
     }
+
+    /// <summary>
+    /// Gets a lookup of merge tags by image type.
+    /// </summary>
+    /// <param name="mergeTags">The merge tags from the <see cref="EmailBodyContent"/>.</param>
+    /// <param name="mergeTagParameters"></param>
+    /// <param name="customData"></param>
+    /// <returns></returns>
+    public static ILookup<bool, (NonEmptyString name, object value)> GetLookupByImageType(
+        ImmutableHashSet<MergeTag> mergeTags,
+        ImmutableDictionary<NonEmptyString, object> mergeTagParameters,
+        ImmutableList<CustomMergeTag> customData
+    )
+    {
+        var customDataLookUp = customData.ToLookup(
+            x => x.Type == typeof(Image),
+            x => (x.Name, x.Value)
+        );
+
+        var imageMergeTagNames = mergeTags
+            .Where(x => x.Type == typeof(Image))
+            .Select(x => x.Name)
+            .ToHashSet();
+
+        var mergeTagParametersLookup = mergeTagParameters.ToLookup(
+            x => imageMergeTagNames.Contains(x.Key),
+            x => (x.Key, x.Value)
+        );
+
+        return customDataLookUp
+            .Concat(mergeTagParametersLookup)
+            .SelectMany(lookup => lookup.Select(value => new { lookup.Key, value }))
+            .ToLookup(x => x.Key, x => x.value);
+    }
 }

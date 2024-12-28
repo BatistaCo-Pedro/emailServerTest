@@ -68,7 +68,7 @@ public static class DependencyInjection
     /// Registers all consumers in the service collection based on the event handler registered.
     /// </summary>
     /// <param name="serviceCollection">The service collection.</param>
-    public static void RegisterEventHandlers(IServiceCollection serviceCollection)
+    private static void RegisterEventHandlers(IServiceCollection serviceCollection)
     {
         var types = Assembly.GetExecutingAssembly().GetTypes();
 
@@ -79,6 +79,15 @@ public static class DependencyInjection
                 eventHandlerType.Value
             );
         }
+    }
+
+    /// <summary>
+    /// Initializes the mime inspectors.
+    /// </summary>
+    public static void InitMimeInspectors(this IServiceCollection _)
+    {
+        MimeInspector.Init();
+        ImageMimeInspector.Init();
     }
 
     private static IServiceCollection AddValidatedOptions<TOptions>(

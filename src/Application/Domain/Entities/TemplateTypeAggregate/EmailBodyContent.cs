@@ -1,4 +1,7 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Local
+
+using HandlebarsDotNet;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 namespace App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate;
@@ -134,13 +137,40 @@ public class EmailBodyContent : AuditableEntity
     }
 
     /// <summary>
+    /// Merges the email body content with the merge tag parameters and custom data.
+    /// </summary>
+    /// <param name="mergeTagParameters"></param>
+    /// <param name="customData"></param>
+    /// <param name="linkedResources"></param>
+    /// <returns></returns>
+    public HtmlString GetMergedBody(
+        ImmutableDictionary<NonEmptyString, object> mergeTagParameters,
+        ImmutableList<CustomMergeTag> customData,
+        out List<LinkedResource> linkedResources
+    )
+    {
+        linkedResources = [];
+
+        var lookupByImage = MergeTagHelper.GetLookupByImageType(
+            MergeTags.ToImmutableHashSet(),
+            mergeTagParameters,
+            customData
+        );
+
+        foreach (var (name, value) in lookupByImage[true].ToHashSet())
+        {
+            var image = new Image((NonEmptyString)value, name);
+            linkedResources.Add(image.CreateLinkedResource(name));
+        }
+
+        var template = Handlebars.Compile(Body);
+        var data = lookupByImage[false].ToDictionary();
+        return template(data);
+    }
+
+    /// <summary>
     /// Returns the plain text representation of the email body content.
     /// </summary>
     /// <returns>The plain text string.</returns>
-    public override string ToString()
-    {
-        // TODO: build plain text representation of the email body content - merge tag etc.
-
-        throw new NotImplementedException();
-    }
+    public override string ToString() => Body.StripHtml();
 }

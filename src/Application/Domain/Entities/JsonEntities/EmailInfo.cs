@@ -1,3 +1,5 @@
+using MimeDetective;
+
 namespace App.Server.Notification.Application.Domain.Entities.JsonEntities;
 
 /// <summary>
@@ -46,7 +48,7 @@ public record EmailInfo
         NonEmptyString recipient,
         NonEmptyString recipientAddress,
         CultureCode cultureCode,
-        ImmutableDictionary<string, object> mergeTagArguments,
+        ImmutableDictionary<NonEmptyString, object> mergeTagArguments,
         Guid? emailTemplateId = null,
         NonEmptyString? customSubject = null
     )
@@ -123,7 +125,9 @@ public record EmailInfo
     /// The arguments to be used within the merge tags.
     /// </summary>
     [JsonPropertyName("mergeTagArguments")]
-    public ImmutableDictionary<string, object> MergeTagArguments { get; init; }
+    public ImmutableDictionary<NonEmptyString, object> MergeTagArguments { get; init; }
+    
+    public ImmutableList<Attachment> Attachments { get; init; }
 
     /// <summary>
     /// The ID of the email template.
@@ -137,3 +141,59 @@ public record EmailInfo
     [JsonPropertyName("customSubject")]
     public string? CustomSubject { get; init; }
 }
+
+public record Resource
+{
+    public Resource(NonEmptyString value, NonEmptyString alt, NonEmptyString mediaType)
+    {
+        Value = value;
+        Alt = alt;
+        MediaType = mediaType;   
+    }
+    
+    public Resource(NonEmptyString value, NonEmptyString alt)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        {
+            MediaType = Path.GetExtension(uri.AbsolutePath);
+            Value = value;
+            Type = (short)ResourceType.Url;
+        }
+        else
+        { 
+            var definitions =  MimeInspector.Inspector.Inspect(Convert.FromBase64String(value));
+            MediaType = definitions.ByMimeType().Single().MimeType;
+            Value = value;
+            Type = (short)ResourceType.Base64;
+        }
+
+        Alt = alt;
+    }
+    
+    /// <summary>
+    /// Either a Base64 encoded string or a URL to the resource.
+    /// </summary>
+    public NonEmptyString Value { get; init; }
+    
+    /// <summary>
+    /// The alt value to use in case the resource can not be loaded.
+    /// </summary>
+    public NonEmptyString Alt { get; init; } 
+    
+    /// <summary>
+    /// The media type of the resource.
+    /// </summary>
+    public NonEmptyString MediaType { get; init; }
+    
+    /// <summary>
+    /// The type of the resource.
+    /// </summary>
+    public short Type { get; init; }
+}
+
+public enum ResourceType : short
+{
+    Url,
+    Base64
+}
+
