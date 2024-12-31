@@ -27,6 +27,8 @@ public static class MimeInspector
             Definitions = new CondensedBuilder { UsageType = UsageType.PersonalNonCommercial, }
                 .Build()
                 .TrimDescription()
+                .TrimMeta()
+                .TrimCategories()
                 .ToImmutableArray()
         }.Build();
     }

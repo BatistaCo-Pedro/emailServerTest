@@ -10,27 +10,27 @@ public interface IMailingQueue
     /// <summary>
     /// Enqueues an email to be sent.
     /// </summary>
-    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <param name="emailInfoDto">The email info object containing all the info sent by the caller.</param>
     /// <returns>A job identifier for the created scheduled email.</returns>
-    public NonEmptyString EnqueueEmail(EmailInfo emailInfo);
+    public NonEmptyString EnqueueEmail(EmailInfoDto emailInfoDto);
 
     /// <summary>
     /// Enqueues an email to be sent after a certain amount of time.
     /// </summary>
-    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <param name="emailInfoDto">The email info object containing all the info sent by the caller.</param>
     /// <param name="sendAt"><see cref="DateTimeOffset"/> defining when to send the email.</param>
     /// <returns>A job identifier for the created scheduled email.</returns>
-    public NonEmptyString EnqueueScheduledEmail(EmailInfo emailInfo, DateTimeOffset sendAt);
+    public NonEmptyString EnqueueScheduledEmail(EmailInfoDto emailInfoDto, DateTimeOffset sendAt);
 
     /// <summary>
     /// Adds a recurring email to the queue. Recurring emails are sent according to the cron expression passed in.
     /// </summary>
     /// <param name="jobId">A job identifier.</param>
-    /// <param name="emailInfo">The email info object containing all the info sent by the caller.</param>
+    /// <param name="emailInfoDto">The email info object containing all the info sent by the caller.</param>
     /// <param name="cronExpression">The cron expression detailing when an email should be sent.</param>
     public void AddRecurringEmail(
         NonEmptyString jobId,
-        EmailInfo emailInfo,
+        EmailInfoDto emailInfoDto,
         NonEmptyString cronExpression
     );
 

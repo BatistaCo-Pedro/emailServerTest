@@ -1,3 +1,4 @@
+#pragma warning disable CS8618, CS9264
 namespace App.Server.Notification.Application.Domain.DataModels.Emailing;
 
 /// <summary>
@@ -9,20 +10,20 @@ namespace App.Server.Notification.Application.Domain.DataModels.Emailing;
 /// It uses the system types e.g. `<see cref="String"/> instead of the domain types e.g. <see cref="NonEmptyString"/>
 /// to make sure serialization works properly across implementations - Text.Json, Newtonsoft etc...
 /// </remarks>
-public record EmailInfo
+public record EmailInfoDto
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="EmailInfo"/> record.
+    /// Initializes a new instance of the <see cref="EmailInfoDto"/> record.
     /// </summary>
     /// <remarks>
     /// This constructor is required by json serializers.
     /// </remarks>
     [Obsolete("Required by json serializers - use other constructors.")]
-    public EmailInfo() { }
+    public EmailInfoDto() { }
 
     /// <summary>
-    /// Creates a new instance of the <see cref="EmailInfo"/> record.
-    /// This is the recommended way to create a new instance of <see cref="EmailInfo"/>
+    /// Creates a new instance of the <see cref="EmailInfoDto"/> record.
+    /// This is the recommended way to create a new instance of <see cref="EmailInfoDto"/>
     /// </summary>
     /// <param name="dataOwnerId">The ID of the data owner.</param>
     /// <param name="templateTypeId">The ID of the template type.</param>
@@ -32,14 +33,14 @@ public record EmailInfo
     /// <param name="recipientAddress">The recipient address.</param>
     /// <param name="cultureCode">The culture code.</param>
     /// <param name="mergeTagArguments">The arguments to be used within the merge tags.</param>
-    /// <param name="attachments"></param>
+    /// <param name="resources"></param>
     /// <param name="emailTemplateId">The ID of the email template
     /// - if provided will be used, otherwise the default email template for the data owner will be used.</param>
     /// <param name="customSubject">A custom subject sent by the event caller.</param>
-    /// <returns>A new <see cref="EmailInfo"/> object with the provided data.</returns>
+    /// <returns>A new <see cref="EmailInfoDto"/> object with the provided data.</returns>
     [JsonConstructor]
     [SetsRequiredMembers]
-    public EmailInfo(
+    public EmailInfoDto(
         Guid dataOwnerId,
         Guid templateTypeId,
         NonEmptyString sender,
@@ -48,7 +49,7 @@ public record EmailInfo
         NonEmptyString recipientAddress,
         CultureCode cultureCode,
         ImmutableDictionary<string, object> mergeTagArguments,
-        ImmutableHashSet<Resource> attachments,
+        ImmutableHashSet<AttachmentDto> resources,
         Guid? emailTemplateId = null,
         NonEmptyString? customSubject = null
     )
@@ -61,7 +62,7 @@ public record EmailInfo
         RecipientAddress = recipientAddress;
         CultureCode = cultureCode;
         MergeTagArguments = mergeTagArguments;
-        Resources = attachments;
+        ResourceDtos = resources.Select(x => x.ToResourceDto()).ToImmutableHashSet();
         EmailTemplateId = emailTemplateId;
         CustomSubject = customSubject?.Value;
     }
@@ -132,14 +133,15 @@ public record EmailInfo
     /// The resources of the email.
     /// </summary>
     [JsonPropertyName("resources")]
-    public ImmutableHashSet<Resource> Resources { get; init; }
+    public ImmutableHashSet<ResourceDto> ResourceDtos { get; init; }
 
     /// <summary>
     /// The attachments of the email.
     /// </summary>
     [JsonIgnore]
     [NotMapped]
-    public ImmutableHashSet<Attachment> Attachments => Resources.Select(x => x.ToAttachment()).ToImmutableHashSet();
+    public ImmutableHashSet<Attachment> Attachments =>
+        ResourceDtos.Select(x => x.ToAttachment()).ToImmutableHashSet();
 
     /// <summary>
     /// The ID of the email template.

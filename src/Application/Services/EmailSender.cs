@@ -10,9 +10,9 @@ public interface IEmailSender
     /// <summary>
     /// Sends an email asynchronously.
     /// </summary>
-    /// <param name="emailInfo">The <see cref="EmailInfo"/> object containing all the required email info.</param>
+    /// <param name="emailInfoDto">The <see cref="EmailInfoDto"/> object containing all the required email info.</param>
     /// <returns>A <see cref="Result"/> object representing the result of the operation.</returns>
-    Result SendEmail(EmailInfo emailInfo);
+    Result SendEmail(EmailInfoDto emailInfoDto);
 }
 
 /// <inheritdoc />
@@ -23,10 +23,10 @@ public class EmailSender(
 ) : IEmailSender
 {
     /// <inheritdoc />
-    public Result SendEmail(EmailInfo emailInfo)
+    public Result SendEmail(EmailInfoDto emailInfoDto)
     {
         var dataOwnerRepo = unitOfWork.GetRepository<IDataOwnerRepository>();
-        var dataOwnerResult = dataOwnerRepo.GetById(emailInfo.DataOwnerId);
+        var dataOwnerResult = dataOwnerRepo.GetById(emailInfoDto.DataOwnerId);
 
         if (!dataOwnerResult.IsSuccess)
         {
@@ -38,7 +38,7 @@ public class EmailSender(
             .Match(CreateSmtpClient, _ => CreateSmtpClient(defaultSmtpSettings.Value));
 
         return mailingService
-            .GetMailMessage(dataOwnerResult.Value, emailInfo)
+            .GetMailMessage(dataOwnerResult.Value, emailInfoDto)
             .Match(mailMessage => Result.Try(() => smtpClient.Send(mailMessage)));
     }
 

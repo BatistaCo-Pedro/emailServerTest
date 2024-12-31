@@ -11,57 +11,57 @@ public interface IMailingService
     /// Gets a mail message based on the provided email info.
     /// </summary>
     /// <param name="dataOwner">The data owner.</param>
-    /// <param name="emailInfo">The email info to create the mail message from.</param>
+    /// <param name="emailInfoDto">The email info to create the mail message from.</param>
     /// <returns>A <see cref="Result{TValue}"/> of type <see cref="MailMessage"/> representing the result of the operation.</returns>
-    Result<MailMessage> GetMailMessage(DataOwner dataOwner, EmailInfo emailInfo);
+    Result<MailMessage> GetMailMessage(DataOwner dataOwner, EmailInfoDto emailInfoDto);
 }
 
 /// <inheritdoc />
 public class MailingService(IUnitOfWork unitOfWork) : IMailingService
 {
     /// <inheritdoc />
-    public Result<MailMessage> GetMailMessage(DataOwner dataOwner, EmailInfo emailInfo)
+    public Result<MailMessage> GetMailMessage(DataOwner dataOwner, EmailInfoDto emailInfoDto)
     {
         var dataOwnerRepository = unitOfWork.GetRepository<ICrudRepository<DataOwner>>();
         var templateTypeRepository = unitOfWork.GetRepository<ITemplateTypeRepository>();
 
         return dataOwner
-            .GetEmailSettingsByTemplateTypeId(emailInfo.TemplateTypeId)
+            .GetEmailSettingsByTemplateTypeId(emailInfoDto.TemplateTypeId)
             .Match(emailSettings =>
                 templateTypeRepository.GetEmailTemplate(
-                    emailInfo.EmailTemplateId ?? emailSettings.DefaultEmailTemplateId
+                    emailInfoDto.EmailTemplateId ?? emailSettings.DefaultEmailTemplateId
                 )
             )
-            .Match(emailTemplate => CreateMailMessage(dataOwner, emailInfo, emailTemplate));
+            .Match(emailTemplate => CreateMailMessage(dataOwner, emailInfoDto, emailTemplate));
     }
 
     private static Result<MailMessage> CreateMailMessage(
         DataOwner dataOwner,
-        EmailInfo emailInfo,
+        EmailInfoDto emailInfoDto,
         EmailTemplate emailTemplate
     )
     {
         return emailTemplate
-            .GetContent(emailInfo.CultureCode)
+            .GetContent(emailInfoDto.CultureCode)
             .Match(emailBodyContent =>
             {
                 var plainBody = emailBodyContent.ToString();
 
                 var emailBody = emailBodyContent.GetMergedBody(
-                    emailInfo.MergeTagArguments,
+                    emailInfoDto.MergeTagArguments,
                     dataOwner.Data.ToImmutableList(),
                     out var linkedResources
                 );
 
                 return Result<MailMessage>.Ok(
                     new EmailBuilder(
-                        emailInfo.SenderMailAddress,
-                        emailInfo.RecipientMailAddress,
-                        emailInfo.CustomSubject ?? emailBodyContent.Subject
+                        emailInfoDto.SenderMailAddress,
+                        emailInfoDto.RecipientMailAddress,
+                        emailInfoDto.CustomSubject ?? emailBodyContent.Subject
                     )
                         .AddPlain(plainBody)
                         .AddHtml(emailBody, builder => builder.AddLinkedResources(linkedResources))
-                        .AddAttachments(emailInfo.Attachments)
+                        .AddAttachments(emailInfoDto.Attachments)
                         .Build()
                 );
             });

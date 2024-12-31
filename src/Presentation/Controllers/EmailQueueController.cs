@@ -12,10 +12,10 @@ public class EmailQueueController(IMailingQueue mailingQueue) : ControllerBase
     /// <summary>
     /// Enqueues an email to be sent.
     /// </summary>
-    /// <param name="emailInfo">The email information.</param>
+    /// <param name="emailInfoDto">The email information.</param>
     [HttpPost]
-    public IActionResult Enqueue([FromBody] EmailInfo emailInfo) =>
-        Ok(mailingQueue.EnqueueEmail(emailInfo));
+    public IActionResult Enqueue([FromBody] EmailInfoDto emailInfoDto) =>
+        Ok(mailingQueue.EnqueueEmail(emailInfoDto));
 
     /// <summary>
     /// Schedules an email to be sent at a later time.
@@ -25,7 +25,7 @@ public class EmailQueueController(IMailingQueue mailingQueue) : ControllerBase
     public IActionResult Schedule([FromBody] ScheduledEmailRequestDto scheduledEmailRequestDto) =>
         Ok(
             mailingQueue.EnqueueScheduledEmail(
-                scheduledEmailRequestDto.EmailInfo,
+                scheduledEmailRequestDto.EmailInfoDto,
                 scheduledEmailRequestDto.SendAt
             )
         );
@@ -39,7 +39,7 @@ public class EmailQueueController(IMailingQueue mailingQueue) : ControllerBase
     {
         mailingQueue.AddRecurringEmail(
             recurringEmailRequestDto.JobId,
-            recurringEmailRequestDto.EmailInfo,
+            recurringEmailRequestDto.EmailInfoDto,
             recurringEmailRequestDto.CronExpression
         );
         return Ok();

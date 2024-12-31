@@ -15,22 +15,22 @@ internal class HangfireQueue(
 ) : IMailingQueue
 {
     /// <inheritdoc />
-    public NonEmptyString EnqueueEmail(EmailInfo emailInfo) =>
-        jobClient.Enqueue(() => emailSender.SendEmail(emailInfo));
+    public NonEmptyString EnqueueEmail(EmailInfoDto emailInfoDto) =>
+        jobClient.Enqueue(() => emailSender.SendEmail(emailInfoDto));
 
     /// <inheritdoc />
-    public NonEmptyString EnqueueScheduledEmail(EmailInfo emailInfo, DateTimeOffset sendAt) =>
-        jobClient.Schedule(() => emailSender.SendEmail(emailInfo), sendAt);
+    public NonEmptyString EnqueueScheduledEmail(EmailInfoDto emailInfoDto, DateTimeOffset sendAt) =>
+        jobClient.Schedule(() => emailSender.SendEmail(emailInfoDto), sendAt);
 
     /// <inheritdoc />
     public void AddRecurringEmail(
         NonEmptyString jobId,
-        EmailInfo emailInfo,
+        EmailInfoDto emailInfoDto,
         NonEmptyString cronExpression
     ) =>
         recurringJobManager.AddOrUpdate(
             jobId,
-            () => emailSender.SendEmail(emailInfo),
+            () => emailSender.SendEmail(emailInfoDto),
             cronExpression
         );
 

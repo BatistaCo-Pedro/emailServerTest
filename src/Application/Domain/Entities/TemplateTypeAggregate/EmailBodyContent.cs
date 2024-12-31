@@ -160,7 +160,7 @@ public class EmailBodyContent : AuditableEntity
 
         foreach (var (name, value) in lookupByImage[true].ToHashSet())
         {
-            var image = new Image((NonEmptyString)value, name);
+            var image = new ResourceDto(Convert.FromBase64String((string)value), name);
             linkedResources.Add(image.ToLinkedResource(name));
         }
 

@@ -52,12 +52,12 @@ public static partial class MergeTagHelper
     )
     {
         var customDataLookUp = customData.ToLookup(
-            x => x.Type == typeof(Image),
+            x => x.Type == typeof(ResourceDto),
             x => ((string)x.Name, x.Value)
         );
 
         var imageMergeTagNames = mergeTags
-            .Where(x => x.Type == typeof(Image))
+            .Where(x => x.Type == typeof(ResourceDto))
             .Select(x => x.Name)
             .ToHashSet();
 

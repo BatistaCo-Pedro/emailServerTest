@@ -326,7 +326,7 @@ public class TestController(
 
         var sender = new MailAddress("feedback@mywnd.tv", "WND CH");
         var recipient = new MailAddress("pb@wnd.ch", "Pedro");
-        var emailInfo = new EmailInfo(
+        var emailInfo = new EmailInfoDto(
             Guid.Parse("0193ded4-425b-3c87-30fd-7cae7fb0ad1c"),
             Guid.Parse("0193ded4-449d-1093-1d55-0b30ccee47bc"),
             sender.DisplayName,
