@@ -1,4 +1,4 @@
-﻿namespace App.Server.Notification.Application.Domain.Types;
+﻿namespace App.Server.Notification.Application.Domain.DataModels.Emailing;
 
 /// <summary>
 ///
@@ -65,7 +65,7 @@ public record Image : Resource
     /// </summary>
     /// <param name="contentId">The content ID to set.</param>
     /// <returns>A <see cref="LinkedResource"/> from the image.</returns>
-    public LinkedResource CreateLinkedResource(NonEmptyString contentId)
+    public LinkedResource ToLinkedResource(NonEmptyString contentId)
     {
         var linkedResource =
             Type == (short)ResourceType.Url

@@ -1,3 +1,5 @@
+using App.Server.Notification.Application.Domain.DataModels.Emailing;
+
 namespace App.Server.Notification.Application.Domain.Common.Helpers;
 
 /// <summary>
@@ -43,15 +45,15 @@ public static partial class MergeTagHelper
     /// <param name="mergeTagParameters"></param>
     /// <param name="customData"></param>
     /// <returns></returns>
-    public static ILookup<bool, (NonEmptyString name, object value)> GetLookupByImageType(
+    public static ILookup<bool, (string name, object value)> GetLookupByImageType(
         ImmutableHashSet<MergeTag> mergeTags,
-        ImmutableDictionary<NonEmptyString, object> mergeTagParameters,
+        ImmutableDictionary<string, object> mergeTagParameters,
         ImmutableList<CustomMergeTag> customData
     )
     {
         var customDataLookUp = customData.ToLookup(
             x => x.Type == typeof(Image),
-            x => (x.Name, x.Value)
+            x => ((string)x.Name, x.Value)
         );
 
         var imageMergeTagNames = mergeTags

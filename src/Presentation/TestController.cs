@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Net.Mail;
 using System.Security.Cryptography;
+using App.Server.Notification.Application.Domain.DataModels.Emailing;
 using App.Server.Notification.Application.Domain.Entities.DataOwnerAggregate;
 using App.Server.Notification.Application.Domain.Entities.TemplateTypeAggregate;
 using MassTransit.Configuration;
@@ -338,13 +339,20 @@ public class TestController(
                 { "name1", DateTime.UtcNow },
                 { "name2", TimeOnly.MaxValue },
                 { "name3", Guid.NewGuid() },
-            }.ToImmutableDictionary()
+            }.ToImmutableDictionary(),
+            []
         );
 
         emailSender.SendEmail(emailInfo);
 
         //mailingQueue.EnqueueEmail(emailInfo);
 
+        return Ok();
+    }
+
+    [HttpGet]
+    public IActionResult Some()
+    {
         return Ok();
     }
 

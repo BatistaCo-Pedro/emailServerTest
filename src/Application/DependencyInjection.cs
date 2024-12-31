@@ -87,7 +87,6 @@ public static class DependencyInjection
     public static void InitMimeInspectors(this IServiceCollection _)
     {
         MimeInspector.Init();
-        ImageMimeInspector.Init();
     }
 
     private static IServiceCollection AddValidatedOptions<TOptions>(

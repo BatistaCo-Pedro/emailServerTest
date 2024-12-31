@@ -1,5 +1,4 @@
-﻿using MimeDetective;
-using MimeDetective.Definitions;
+﻿using MimeDetective.Definitions;
 using MimeDetective.Definitions.Licensing;
 using MimeDetective.Storage;
 

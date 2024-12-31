@@ -1,5 +1,6 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 
+using App.Server.Notification.Application.Domain.DataModels.Emailing;
 using HandlebarsDotNet;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -144,7 +145,7 @@ public class EmailBodyContent : AuditableEntity
     /// <param name="linkedResources"></param>
     /// <returns></returns>
     public HtmlString GetMergedBody(
-        ImmutableDictionary<NonEmptyString, object> mergeTagParameters,
+        ImmutableDictionary<string, object> mergeTagParameters,
         ImmutableList<CustomMergeTag> customData,
         out List<LinkedResource> linkedResources
     )
@@ -160,7 +161,7 @@ public class EmailBodyContent : AuditableEntity
         foreach (var (name, value) in lookupByImage[true].ToHashSet())
         {
             var image = new Image((NonEmptyString)value, name);
-            linkedResources.Add(image.CreateLinkedResource(name));
+            linkedResources.Add(image.ToLinkedResource(name));
         }
 
         var template = Handlebars.Compile(Body);

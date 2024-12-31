@@ -50,6 +50,7 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
+global using MimeDetective;
 global using Riok.Mapperly.Abstractions;
 global using Serilog;
 global using Serilog.Core;

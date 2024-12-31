@@ -1,6 +1,4 @@
-using MimeDetective;
-
-namespace App.Server.Notification.Application.Domain.Entities.JsonEntities;
+namespace App.Server.Notification.Application.Domain.DataModels.Emailing;
 
 /// <summary>
 /// This class will be serialized and used by the mail queue to save mail information.
@@ -34,6 +32,7 @@ public record EmailInfo
     /// <param name="recipientAddress">The recipient address.</param>
     /// <param name="cultureCode">The culture code.</param>
     /// <param name="mergeTagArguments">The arguments to be used within the merge tags.</param>
+    /// <param name="attachments"></param>
     /// <param name="emailTemplateId">The ID of the email template
     /// - if provided will be used, otherwise the default email template for the data owner will be used.</param>
     /// <param name="customSubject">A custom subject sent by the event caller.</param>
@@ -48,7 +47,8 @@ public record EmailInfo
         NonEmptyString recipient,
         NonEmptyString recipientAddress,
         CultureCode cultureCode,
-        ImmutableDictionary<NonEmptyString, object> mergeTagArguments,
+        ImmutableDictionary<string, object> mergeTagArguments,
+        ImmutableHashSet<Resource> attachments,
         Guid? emailTemplateId = null,
         NonEmptyString? customSubject = null
     )
@@ -61,6 +61,7 @@ public record EmailInfo
         RecipientAddress = recipientAddress;
         CultureCode = cultureCode;
         MergeTagArguments = mergeTagArguments;
+        Resources = attachments;
         EmailTemplateId = emailTemplateId;
         CustomSubject = customSubject?.Value;
     }
@@ -125,9 +126,20 @@ public record EmailInfo
     /// The arguments to be used within the merge tags.
     /// </summary>
     [JsonPropertyName("mergeTagArguments")]
-    public ImmutableDictionary<NonEmptyString, object> MergeTagArguments { get; init; }
-    
-    public ImmutableList<Attachment> Attachments { get; init; }
+    public ImmutableDictionary<string, object> MergeTagArguments { get; init; }
+
+    /// <summary>
+    /// The resources of the email.
+    /// </summary>
+    [JsonPropertyName("resources")]
+    public ImmutableHashSet<Resource> Resources { get; init; }
+
+    /// <summary>
+    /// The attachments of the email.
+    /// </summary>
+    [JsonIgnore]
+    [NotMapped]
+    public ImmutableHashSet<Attachment> Attachments => Resources.Select(x => x.ToAttachment()).ToImmutableHashSet();
 
     /// <summary>
     /// The ID of the email template.
@@ -141,59 +153,3 @@ public record EmailInfo
     [JsonPropertyName("customSubject")]
     public string? CustomSubject { get; init; }
 }
-
-public record Resource
-{
-    public Resource(NonEmptyString value, NonEmptyString alt, NonEmptyString mediaType)
-    {
-        Value = value;
-        Alt = alt;
-        MediaType = mediaType;   
-    }
-    
-    public Resource(NonEmptyString value, NonEmptyString alt)
-    {
-        if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
-        {
-            MediaType = Path.GetExtension(uri.AbsolutePath);
-            Value = value;
-            Type = (short)ResourceType.Url;
-        }
-        else
-        { 
-            var definitions =  MimeInspector.Inspector.Inspect(Convert.FromBase64String(value));
-            MediaType = definitions.ByMimeType().Single().MimeType;
-            Value = value;
-            Type = (short)ResourceType.Base64;
-        }
-
-        Alt = alt;
-    }
-    
-    /// <summary>
-    /// Either a Base64 encoded string or a URL to the resource.
-    /// </summary>
-    public NonEmptyString Value { get; init; }
-    
-    /// <summary>
-    /// The alt value to use in case the resource can not be loaded.
-    /// </summary>
-    public NonEmptyString Alt { get; init; } 
-    
-    /// <summary>
-    /// The media type of the resource.
-    /// </summary>
-    public NonEmptyString MediaType { get; init; }
-    
-    /// <summary>
-    /// The type of the resource.
-    /// </summary>
-    public short Type { get; init; }
-}
-
-public enum ResourceType : short
-{
-    Url,
-    Base64
-}
-
