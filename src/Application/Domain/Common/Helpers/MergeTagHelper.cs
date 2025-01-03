@@ -1,5 +1,3 @@
-using App.Server.Notification.Application.Domain.DataModels.Emailing;
-
 namespace App.Server.Notification.Application.Domain.Common.Helpers;
 
 /// <summary>
@@ -39,36 +37,36 @@ public static partial class MergeTagHelper
     }
 
     /// <summary>
-    /// Gets a lookup of merge tags by image type.
+    /// Gets the resource and the rest of the data in separate dictionaries.
     /// </summary>
     /// <param name="mergeTags">The merge tags from the <see cref="EmailBodyContent"/>.</param>
     /// <param name="mergeTagParameters"></param>
     /// <param name="customData"></param>
-    /// <returns></returns>
-    public static ILookup<bool, (string name, object value)> GetLookupByImageType(
+    /// <returns>A <see cref="Tuple{T1, T2}"/> of <see cref="ImmutableDictionary{TKey,TValue}"/> with the resources and data.</returns>
+    public static (
+        ImmutableDictionary<string, Resource> resources,
+        ImmutableDictionary<string, string> data
+    ) GetResourcesAndOthersSeparate(
         ImmutableHashSet<MergeTag> mergeTags,
-        ImmutableDictionary<string, object> mergeTagParameters,
-        ImmutableList<CustomMergeTag> customData
+        ImmutableDictionary<string, string> mergeTagParameters,
+        ImmutableHashSet<CustomMergeTag> customData
     )
     {
-        var customDataLookUp = customData.ToLookup(
-            x => x.Type == typeof(ResourceDto),
-            x => ((string)x.Name, x.Value)
+        var customDataDictionary = customData.ToDictionary(
+            x => (string)x.Name,
+            x => (string)x.StringValue
         );
+        var allData = mergeTagParameters.Concat(customDataDictionary).ToDictionary();
 
         var imageMergeTagNames = mergeTags
-            .Where(x => x.Type == typeof(ResourceDto))
+            .Where(x => x.Type == typeof(Resource))
             .Select(x => x.Name)
             .ToHashSet();
 
-        var mergeTagParametersLookup = mergeTagParameters.ToLookup(
-            x => imageMergeTagNames.Contains(x.Key),
-            x => (x.Key, x.Value)
-        );
+        var lookupTableByIsResource = allData.ToLookup(x => imageMergeTagNames.Contains(x.Key));
 
-        return customDataLookUp
-            .Concat(mergeTagParametersLookup)
-            .SelectMany(lookup => lookup.Select(value => new { lookup.Key, value }))
-            .ToLookup(x => x.Key, x => x.value);
+        var images = lookupTableByIsResource[true]
+            .ToImmutableDictionary(x => x.Key, x => Resource.Create(x.Value, x.Key));
+        return (images, lookupTableByIsResource[false].ToImmutableDictionary());
     }
 }

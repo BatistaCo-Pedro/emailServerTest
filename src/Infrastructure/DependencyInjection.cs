@@ -82,7 +82,7 @@ public static class DependencyInjection
     )
     {
         var messagingSettings =
-            configuration.GetSection("MessagingSettings").Get<MessagingSettings>()
+            configuration.GetSection(nameof(MessagingSettings)).Get<MessagingSettings>()
             ?? throw new ApplicationException("Messaging settings not found");
 
         // Domain events mediator

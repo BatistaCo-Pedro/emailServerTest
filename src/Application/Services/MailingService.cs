@@ -1,5 +1,3 @@
-using App.Server.Notification.Application.Domain.DataModels.Emailing;
-
 namespace App.Server.Notification.Application.Services;
 
 /// <summary>
@@ -22,7 +20,6 @@ public class MailingService(IUnitOfWork unitOfWork) : IMailingService
     /// <inheritdoc />
     public Result<MailMessage> GetMailMessage(DataOwner dataOwner, EmailInfoDto emailInfoDto)
     {
-        var dataOwnerRepository = unitOfWork.GetRepository<ICrudRepository<DataOwner>>();
         var templateTypeRepository = unitOfWork.GetRepository<ITemplateTypeRepository>();
 
         return dataOwner
@@ -49,7 +46,7 @@ public class MailingService(IUnitOfWork unitOfWork) : IMailingService
 
                 var emailBody = emailBodyContent.GetMergedBody(
                     emailInfoDto.MergeTagArguments,
-                    dataOwner.Data.ToImmutableList(),
+                    dataOwner.Data.ToImmutableHashSet(),
                     out var linkedResources
                 );
 

@@ -334,11 +334,11 @@ public class TestController(
             recipient.DisplayName,
             recipient.Address,
             "en-Us",
-            new Dictionary<string, object>()
+            new Dictionary<string, string>()
             {
-                { "name1", DateTime.UtcNow },
-                { "name2", TimeOnly.MaxValue },
-                { "name3", Guid.NewGuid() },
+                { "name1", DateTime.UtcNow.ToString() },
+                { "name2", TimeOnly.MaxValue.ToString() },
+                { "name3", Guid.NewGuid().ToString() },
             }.ToImmutableDictionary(),
             []
         );
@@ -350,9 +350,29 @@ public class TestController(
         return Ok();
     }
 
-    [HttpGet]
-    public IActionResult Some()
+    [HttpGet("[action]")]
+    public IActionResult TestSerializationFromDic()
     {
+        var emailInfo = new EmailInfoDto(
+            Guid.Parse("0193ded4-425b-3c87-30fd-7cae7fb0ad1c"),
+            Guid.Parse("0193ded4-449d-1093-1d55-0b30ccee47bc"),
+            "test",
+            "test@test-test.test",
+            "test",
+           "test@test-test.test",
+            "en-Us",
+            new Dictionary<string, string>()
+            {
+                { "name1", DateTime.UtcNow.ToString() },
+                { "name2", TimeOnly.MaxValue.ToString() },
+                { "name3", Guid.NewGuid().ToString() },
+            }.ToImmutableDictionary(),
+            []
+        );
+
+        var json = JsonSerializer.Serialize(emailInfo);
+        var t = JsonSerializer.Deserialize<EmailInfoDto>(json);
+        
         return Ok();
     }
 

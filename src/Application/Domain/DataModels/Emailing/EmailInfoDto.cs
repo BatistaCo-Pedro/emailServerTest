@@ -18,7 +18,7 @@ public record EmailInfoDto
     /// <remarks>
     /// This constructor is required by json serializers.
     /// </remarks>
-    [Obsolete("Required by json serializers - use other constructors.")]
+    [Obsolete("Required by other json serializers - use other constructors.")]
     public EmailInfoDto() { }
 
     /// <summary>
@@ -33,7 +33,7 @@ public record EmailInfoDto
     /// <param name="recipientAddress">The recipient address.</param>
     /// <param name="cultureCode">The culture code.</param>
     /// <param name="mergeTagArguments">The arguments to be used within the merge tags.</param>
-    /// <param name="resources"></param>
+    /// <param name="attachmentDtos">The attachment dtos.</param>
     /// <param name="emailTemplateId">The ID of the email template
     /// - if provided will be used, otherwise the default email template for the data owner will be used.</param>
     /// <param name="customSubject">A custom subject sent by the event caller.</param>
@@ -43,28 +43,28 @@ public record EmailInfoDto
     public EmailInfoDto(
         Guid dataOwnerId,
         Guid templateTypeId,
-        NonEmptyString sender,
-        NonEmptyString senderAddress,
-        NonEmptyString recipient,
-        NonEmptyString recipientAddress,
-        CultureCode cultureCode,
-        ImmutableDictionary<string, object> mergeTagArguments,
-        ImmutableHashSet<AttachmentDto> resources,
+        string sender,
+        string senderAddress,
+        string recipient,
+        string recipientAddress,
+        string cultureCode,
+        ImmutableDictionary<string, string> mergeTagArguments,
+        ImmutableHashSet<AttachmentDto> attachmentDtos,
         Guid? emailTemplateId = null,
-        NonEmptyString? customSubject = null
+        string? customSubject = null
     )
     {
         DataOwnerId = dataOwnerId;
         TemplateTypeId = templateTypeId;
-        Sender = sender;
-        SenderAddress = senderAddress;
-        Recipient = recipient;
-        RecipientAddress = recipientAddress;
-        CultureCode = cultureCode;
+        Sender = (NonEmptyString)sender;
+        SenderAddress = (NonEmptyString)senderAddress;
+        Recipient = (NonEmptyString)recipient;
+        RecipientAddress = (NonEmptyString)recipientAddress;
+        CultureCode = (CultureCode)cultureCode;
         MergeTagArguments = mergeTagArguments;
-        ResourceDtos = resources.Select(x => x.ToResourceDto()).ToImmutableHashSet();
+        AttachmentDtos = attachmentDtos;
         EmailTemplateId = emailTemplateId;
-        CustomSubject = customSubject?.Value;
+        CustomSubject = customSubject;
     }
 
     /// <summary>
@@ -127,13 +127,13 @@ public record EmailInfoDto
     /// The arguments to be used within the merge tags.
     /// </summary>
     [JsonPropertyName("mergeTagArguments")]
-    public ImmutableDictionary<string, object> MergeTagArguments { get; init; }
+    public ImmutableDictionary<string, string> MergeTagArguments { get; init; }
 
     /// <summary>
     /// The resources of the email.
     /// </summary>
-    [JsonPropertyName("resources")]
-    public ImmutableHashSet<ResourceDto> ResourceDtos { get; init; }
+    [JsonPropertyName("attachmentDtos")]
+    public ImmutableHashSet<AttachmentDto> AttachmentDtos { get; init; }
 
     /// <summary>
     /// The attachments of the email.
@@ -141,7 +141,7 @@ public record EmailInfoDto
     [JsonIgnore]
     [NotMapped]
     public ImmutableHashSet<Attachment> Attachments =>
-        ResourceDtos.Select(x => x.ToAttachment()).ToImmutableHashSet();
+        AttachmentDtos.Select(x => x.ToAttachment()).ToImmutableHashSet();
 
     /// <summary>
     /// The ID of the email template.

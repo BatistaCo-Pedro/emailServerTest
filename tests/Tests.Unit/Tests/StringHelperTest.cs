@@ -38,7 +38,7 @@ public class StringHelperTest
             Assert.Equal(
                 keyValuePair.Key,
                 StringHelper
-                    .Parse(keyValuePair.Value, stringToTypeMap.Keys.ToImmutableArray())
+                    .Parse(keyValuePair.Value, keyValuePair.Key)
                     .GetType()
             );
         }

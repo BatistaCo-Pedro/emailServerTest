@@ -1,4 +1,5 @@
 global using System;
+global using System.Buffers.Text;
 global using System.Collections;
 global using System.Collections.Frozen;
 global using System.Collections.Generic;
@@ -29,6 +30,7 @@ global using App.Server.Notification.Application.Domain.Common;
 global using App.Server.Notification.Application.Domain.Common.Helpers;
 global using App.Server.Notification.Application.Domain.Common.Validation;
 global using App.Server.Notification.Application.Domain.DataModels.Dtos;
+global using App.Server.Notification.Application.Domain.DataModels.Emailing;
 global using App.Server.Notification.Application.Domain.DataModels.Encryption;
 global using App.Server.Notification.Application.Domain.DataModels.Messaging;
 global using App.Server.Notification.Application.Domain.DataModels.Messaging.DomainEvents;

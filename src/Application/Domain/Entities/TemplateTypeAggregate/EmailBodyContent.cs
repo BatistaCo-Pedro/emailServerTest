@@ -1,6 +1,5 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 
-using App.Server.Notification.Application.Domain.DataModels.Emailing;
 using HandlebarsDotNet;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -12,9 +11,6 @@ namespace App.Server.Notification.Application.Domain.Entities.TemplateTypeAggreg
 /// </summary>
 public class EmailBodyContent : AuditableEntity
 {
-    [Obsolete("Required by DI and EF Core")]
-    protected EmailBodyContent() { }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="EmailBodyContent"/> class.
     /// </summary>
@@ -145,27 +141,22 @@ public class EmailBodyContent : AuditableEntity
     /// <param name="linkedResources"></param>
     /// <returns></returns>
     public HtmlString GetMergedBody(
-        ImmutableDictionary<string, object> mergeTagParameters,
-        ImmutableList<CustomMergeTag> customData,
-        out List<LinkedResource> linkedResources
+        ImmutableDictionary<string, string> mergeTagParameters,
+        ImmutableHashSet<CustomMergeTag> customData,
+        out ImmutableList<LinkedResource> linkedResources
     )
     {
-        linkedResources = [];
-
-        var lookupByImage = MergeTagHelper.GetLookupByImageType(
+        var (resources, data) = MergeTagHelper.GetResourcesAndOthersSeparate(
             MergeTags.ToImmutableHashSet(),
             mergeTagParameters,
             customData
         );
 
-        foreach (var (name, value) in lookupByImage[true].ToHashSet())
-        {
-            var image = new ResourceDto(Convert.FromBase64String((string)value), name);
-            linkedResources.Add(image.ToLinkedResource(name));
-        }
+        linkedResources = new List<LinkedResource>(
+            resources.Select(x => x.Value.ToLinkedResource(x.Key))
+        ).ToImmutableList();
 
         var template = Handlebars.Compile(Body);
-        var data = lookupByImage[false].ToDictionary();
         return template(data);
     }
 

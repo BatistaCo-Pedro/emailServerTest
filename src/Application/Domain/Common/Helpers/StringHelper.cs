@@ -6,39 +6,6 @@ namespace App.Server.Notification.Application.Domain.Common.Helpers;
 public static class StringHelper
 {
     /// <summary>
-    /// Parses a string to one of the supported types passed in.
-    /// Defaults to the string value if it couldn't be parsed to any other type.
-    /// </summary>
-    /// <param name="stringValue">The value as string.</param>
-    /// <param name="supportedTypes">A list of supported types to try to parse to.</param>
-    /// <param name="cultureInfo">The culture info to use for formatting.</param>
-    /// <returns>The object successfully parsed - will always return the string value as a last resort.</returns>
-    /// <remarks>
-    /// Support <see cref="DateOnly"/>, <see cref="TimeOnly"/> and <see cref="Guid"/> besides the default conversion types.
-    /// See <see cref="Convert.ChangeType(object?, Type)"/> for more information about the default types.
-    /// Object, arrays and null are not supported.
-    /// </remarks>
-    public static object Parse(
-        string stringValue,
-        ImmutableArray<Type> supportedTypes,
-        CultureInfo? cultureInfo = null
-    )
-    {
-        var culture = cultureInfo ?? CultureInfo.InvariantCulture;
-
-        foreach (var supportedType in supportedTypes)
-        {
-            if (TryParse(stringValue, supportedType, culture, out var result))
-            {
-                return result;
-            }
-        }
-
-        // If no type could be parsed, default back to the string value.
-        return stringValue;
-    }
-
-    /// <summary>
     /// Tries to parse a string value to a specific type.
     /// </summary>
     /// <param name="stringValue">The string value to parse.</param>
@@ -70,6 +37,7 @@ public static class StringHelper
         var parameters = new[] { typeof(string), typeof(IFormatProvider), type.MakeByRefType() };
         var arguments = new object[] { stringValue, culture, null! };
 
+        // done this way because some of the primitive implementation do an interface implementation of IParsable<T>
         var interfaceMap = type.GetInterfaceMap(typeof(IParsable<>).MakeGenericType(type));
         var tryParseMethod = interfaceMap.TargetMethods.FirstOrDefault(x =>
             parameters.SequenceEqual(x.GetParameters().Select(p => p.ParameterType))

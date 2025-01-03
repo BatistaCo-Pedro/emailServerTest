@@ -1,5 +1,3 @@
-using App.Server.Notification.Application.Domain.DataModels.Emailing;
-
 namespace App.Server.Notification.Application.Abstractions;
 
 /// <summary>

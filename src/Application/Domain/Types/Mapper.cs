@@ -86,4 +86,12 @@ public static partial class Mapper
     /// <param name="customMergeTagDto">The dto to map.</param>
     /// <returns>An <see cref="CustomMergeTag"/> entity from the <paramref name="customMergeTagDto"/>.</returns>
     public static partial CustomMergeTag ToEntity(this CustomMergeTagDto customMergeTagDto);
+
+    /// <summary>
+    /// Maps a <see cref="AttachmentDto"/> to an <see cref="Attachment"/>.
+    /// </summary>
+    /// <param name="attachmentDto">The dto to map.</param>
+    /// <returns>An <see cref="Attachment"/> entity from the <paramref name="attachmentDto"/>.</returns>
+    public static Attachment ToAttachment(this AttachmentDto attachmentDto) =>
+        Resource.Create(attachmentDto.Value, attachmentDto.Alt).ToAttachment(attachmentDto.Name);
 }

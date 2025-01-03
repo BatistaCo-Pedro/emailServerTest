@@ -11,9 +11,6 @@ public record CustomMergeTag : MergeTag
 {
     #region Constructors
 
-    [Obsolete("Required by DI and EF Core")]
-    protected CustomMergeTag() { }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomMergeTag"/> class.
     /// Used by the JSON deserializer.
@@ -28,7 +25,7 @@ public record CustomMergeTag : MergeTag
     /// Mostly for serialization and deserialization between the database and the application.
     /// </remarks>
     [JsonConstructor]
-    public CustomMergeTag(
+    protected CustomMergeTag(
         NonEmptyString stringValue,
         NonEmptyString name,
         MergeTagShortCode shortCode,
@@ -44,12 +41,13 @@ public record CustomMergeTag : MergeTag
     /// Initializes a new instance of the <see cref="CustomMergeTag"/> class.
     /// </summary>
     /// <param name="name">The name of the merge tag.</param>
+    /// <param name="typeName"></param>
     /// <param name="stringValue">The value of the element.</param>
     /// <remarks>
     /// Constructor used by the mapper to create a new instance with an arbitrary value.
     /// </remarks>
-    public CustomMergeTag(NonEmptyString name, NonEmptyString stringValue)
-        : this(name, StringHelper.Parse(stringValue, ValidTypes)) { }
+    public CustomMergeTag(NonEmptyString name, NonEmptyString typeName, NonEmptyString stringValue)
+        : this(stringValue, name, MergeTagShortCode.Generate(name), typeName) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomMergeTag"/> class.
@@ -86,6 +84,16 @@ public record CustomMergeTag : MergeTag
     [NotMapped]
     [JsonIgnore]
     public object Value { get; }
+
+    /// <summary>
+    /// Gets a type by its name.
+    /// </summary>
+    /// <param name="typeName">The type name to attempt to get the type for.</param>
+    /// <returns>The type if it was found, otherwise null.</returns>
+    /// <exception cref="ArgumentException">Type couldn't be found.</exception>
+    private static Type GetTypeByName(NonEmptyString typeName) =>
+        Type.GetType(typeName)
+        ?? throw new ArgumentException($"Type {typeName} not found.", nameof(typeName));
 
     #endregion
 }
